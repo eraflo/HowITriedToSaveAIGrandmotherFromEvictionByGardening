@@ -406,6 +406,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2fed50eac9a149db29a74954bafbc2fc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  sun: {fileID: 410087040}
   timeScale: 2
 --- !u!4 &525889233
 Transform:
