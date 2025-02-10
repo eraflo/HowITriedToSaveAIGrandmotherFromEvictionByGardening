@@ -6,8 +6,8 @@ public class TimeOfDayManager : MonoBehaviour
     [SerializeField] private float timeScale = 1;
     
     public int Day { get; private set; } = 1;
-    
-    public int Hour { get; private set; }
+
+    public int Hour { get; private set; } = 7;
     
     public int Minute { get; private set; }
     
