@@ -6,14 +6,14 @@ using System.Threading.Tasks;
 
 namespace Assets.Scripts.GeminiAI.Request
 {
-    public enum MimeType
+    public enum Modality
     {
-        
+        TEXT,
+        AUDIO
     }
 
-    public class RequestInlineData
+    public class ResponseModality
     {
-        public string MimeType { get; set; }
-        public string Data { get; set; }
+        public string Modality { get; set; }
     }
 }

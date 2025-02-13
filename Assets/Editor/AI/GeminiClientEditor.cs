@@ -15,6 +15,7 @@ public class GeminiClientEditor : Editor
 
     private List<string> safetyCategories = new List<string>();
     private List<string> safetyThresholds = new List<string>();
+    public List<string> responseModalities = new List<string>();
 
     private SerializedProperty _geminiClient;
 
@@ -23,6 +24,7 @@ public class GeminiClientEditor : Editor
         _geminiClient = serializedObject.FindProperty("_options");
         safetyThresholds = EnumUtils.GetEnumFields<SafetyThreshold>();
         safetyCategories = EnumUtils.GetEnumFields<SafetyCategory>();
+        responseModalities = EnumUtils.GetEnumFields<Modality>();
     }
 
     private void OnValidate()
@@ -37,21 +39,70 @@ public class GeminiClientEditor : Editor
 
         GeminiClient myScript = (GeminiClient)target;
 
-        // Draw fields for AIGenerationConfig
+        AIGenerationConfigDisplay(myScript);
+
+        AIGenerationConfigStopSequencesDisplay(myScript);
+
+        SafetySettingsDisplay(myScript);
+
+        AIGenerationConfigResponseModalitiesDisplay(myScript);
+
+
+        // Draw field with prompt and button
+        EditorGUILayout.LabelField("Generate Content", EditorStyles.boldLabel);
+        prompt = EditorGUILayout.TextField("Prompt", prompt);
+
+
+        if (GUILayout.Button("Generate"))
+        {
+            Task.Run(async () => await GeneratePrompt(myScript, prompt));
+
+            // Deactivate the button
+            GUI.enabled = false;
+        }
+
+        // Display the response
+        if(!string.IsNullOrEmpty(response))
+        {
+            EditorGUILayout.LabelField("Response", EditorStyles.boldLabel);
+            EditorGUILayout.TextArea(response);
+        }
+    }
+
+    private async Task GeneratePrompt(GeminiClient client, string prompt)
+    {
+        Debug.Log("Generating content...");
+        Task<List<string>> task = client.GenerateContentAsync(prompt, new CancellationTokenSource().Token);
+        await task;
+
+        Debug.Log("Content generated.");
+
+        response = task.Result[0];
+        GUI.enabled = true;
+    }
+
+    #region Display Functions
+
+    private void AIGenerationConfigDisplay(GeminiClient myScript)
+    {
         EditorGUILayout.LabelField("Generation Config", EditorStyles.boldLabel);
         myScript.GenerationConfig.MaxOutputTokens = EditorGUILayout.IntField("Max Output Tokens", myScript.GenerationConfig.MaxOutputTokens);
         myScript.GenerationConfig.Temperature = EditorGUILayout.FloatField("Temperature", myScript.GenerationConfig.Temperature);
         myScript.GenerationConfig.TopP = EditorGUILayout.FloatField("Top P", myScript.GenerationConfig.TopP);
         myScript.GenerationConfig.TopK = EditorGUILayout.FloatField("Top K", myScript.GenerationConfig.TopK);
 
-        // Fields for StopSequences
+        EditorGUILayout.Space();
+    }
+
+    private void AIGenerationConfigStopSequencesDisplay(GeminiClient myScript)
+    {
         EditorGUILayout.LabelField("Stop Sequences", EditorStyles.boldLabel);
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField("Stop Sequence", GUILayout.Width(100));
 
         EditorGUILayout.BeginVertical();
 
-        if(myScript.GenerationConfig.StopSequences == null)
+        if (myScript.GenerationConfig.StopSequences == null)
         {
             myScript.GenerationConfig.StopSequences = new List<object>();
         }
@@ -77,8 +128,57 @@ public class GeminiClientEditor : Editor
         EditorGUILayout.EndHorizontal();
 
         EditorGUILayout.Space();
+    }
 
-        // Fields for SafetySettings
+    private void AIGenerationConfigResponseModalitiesDisplay(GeminiClient myScript)
+    {
+        EditorGUILayout.LabelField("Response Modalities", EditorStyles.boldLabel);
+        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.LabelField("Response Modality", GUILayout.Width(150));
+
+        EditorGUILayout.BeginVertical();
+
+        if (myScript.GenerationConfig.ResponseModalities == null)
+        {
+            myScript.GenerationConfig.ResponseModalities = new string[0];
+        }
+
+        for (int i = 0; i < myScript.GenerationConfig.ResponseModalities.Length; i++)
+        {
+            EditorGUILayout.BeginHorizontal();
+
+            var selected = responseModalities.IndexOf(myScript.GenerationConfig.ResponseModalities[i]);
+
+            if (selected == -1)
+            {
+                selected = 0;
+            }
+
+            selected = EditorGUILayout.Popup(selected, responseModalities.ToArray());
+            myScript.GenerationConfig.ResponseModalities[i] = responseModalities[selected];
+
+
+            if (GUILayout.Button("Remove"))
+            {
+                myScript.GenerationConfig.ResponseModalities = ArrayUtils.RemoveAt(myScript.GenerationConfig.ResponseModalities, i);
+            }
+            EditorGUILayout.EndHorizontal();
+        }
+
+        if (GUILayout.Button("Add"))
+        {
+            myScript.GenerationConfig.ResponseModalities = ArrayUtils.Add(myScript.GenerationConfig.ResponseModalities, "");
+        }
+
+        EditorGUILayout.EndVertical();
+
+        EditorGUILayout.EndHorizontal();
+
+        EditorGUILayout.Space();
+    }
+
+    private void SafetySettingsDisplay(GeminiClient myScript)
+    {
         EditorGUILayout.LabelField("Safety Settings", EditorStyles.boldLabel);
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField("Safety Setting", GUILayout.Width(100));
@@ -100,7 +200,7 @@ public class GeminiClientEditor : Editor
             // Display all safety categories in a dropdown. The user can select one. Initially, the selected value is the first one.
             var selectedCategory = safetyCategories.IndexOf(myScript.SafetySettings[i].Category);
 
-            if (selectedCategory == -1) 
+            if (selectedCategory == -1)
             {
                 selectedCategory = 0;
             }
@@ -138,40 +238,9 @@ public class GeminiClientEditor : Editor
         EditorGUILayout.EndHorizontal();
 
         EditorGUILayout.Space();
-
-
-
-        // Draw field with prompt and button
-        EditorGUILayout.LabelField("Generate Content", EditorStyles.boldLabel);
-        prompt = EditorGUILayout.TextField("Prompt", prompt);
-
-
-        if (GUILayout.Button("Generate"))
-        {
-            Task.Run(async () => await GeneratePrompt(myScript, prompt));
-
-            // Deactivate the button
-            GUI.enabled = false;
-        }
-
-        // Display the response
-        if(!string.IsNullOrEmpty(response))
-        {
-            EditorGUILayout.LabelField("Response", EditorStyles.boldLabel);
-            EditorGUILayout.TextArea(response);
-        }
     }
 
-    private async Task GeneratePrompt(GeminiClient client, string prompt)
-    {
-        Debug.Log("Generating content...");
-        Task<string> task = client.GenerateContentAsync(prompt, new CancellationTokenSource().Token);
-        await task;
 
-        Debug.Log("Content generated.");
-
-        response = task.Result;
-        GUI.enabled = true;
-    }
+    #endregion
 }
 

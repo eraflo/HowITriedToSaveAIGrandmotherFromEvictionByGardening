@@ -1,9 +1,12 @@
 ﻿using Assets.Scripts.GeminiAI.Request;
+using Assets.Scripts.GeminiAI.Request.RequestParts;
 using Assets.Scripts.GeminiAI.Response;
+using Assets.Scripts.Utils;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -54,11 +57,22 @@ namespace Assets.Scripts.GeminiAI
             }
         }
 
-        public async Task<string> GenerateContentAsync(string input, CancellationToken cancellationToken)
+        public async Task<List<string>> GenerateContentAsync(string input, CancellationToken cancellationToken)
         {
             try
             {
-                var requestBody = APIRequestFactory.CreateRequest(input, GenerationConfig, SafetySettings.ToArray());
+                var requestBody = APIRequestFactory.CreateRequest(
+                    prompt: input, 
+                    parts: new RequestPart[]
+                    {
+                        new TextPart
+                        {
+                            Text = input
+                        }
+                    },
+                    generationConfig: GenerationConfig, 
+                    safetySettings: SafetySettings.ToArray()
+                );
                 var serializedRequestBody = JsonConvert.SerializeObject(requestBody, _serializerSettings);
                 var content = new StringContent(serializedRequestBody, System.Text.Encoding.UTF8, "application/json");
 
@@ -66,19 +80,52 @@ namespace Assets.Scripts.GeminiAI
 
                 response.EnsureSuccessStatusCode();
 
-                var responseBody = await response.Content.ReadAsStringAsync();
+                List<string> responses = new();
 
-                var geminiResponse = JsonConvert.DeserializeObject<AIResponse>(responseBody);
+                foreach (var modality in GenerationConfig.ResponseModalities)
+                {
+                    switch (EnumUtils.GetEnumFieldFromString<Modality>(modality))
+                    {
+                        case Modality.TEXT:
+                            responses.Add(await ManageTextOutput(response));
+                            break;
+                        case Modality.AUDIO:
+                            ManageAudioOutput();
+                            break;
+                        default:
+                            break;
+                    }
+                    {
+                    }
+                }
 
-                var geminiResponseText = geminiResponse?.Candidates[0].Content.Parts[0].Text;
+                return responses;
 
-                return geminiResponseText;
             }
             catch (Exception ex)
             {
                 Debug.LogError($"Error generating content: {ex.Message}");
-                return string.Empty;
+                return null;
             }
+        }
+
+        private async Task<string> ManageTextOutput(HttpResponseMessage response)
+        {
+            // Read the response body
+            var responseBody = await response.Content.ReadAsStringAsync();
+
+            // Deserialize the response
+            var geminiResponse = JsonConvert.DeserializeObject<AIResponse>(responseBody);
+
+            // Get the text from the response
+            var geminiResponseText = geminiResponse?.Candidates[0].Content.Parts[0].Text;
+
+            return geminiResponseText;
+        }
+
+        private void ManageAudioOutput()
+        {
+
         }
     }
 }
