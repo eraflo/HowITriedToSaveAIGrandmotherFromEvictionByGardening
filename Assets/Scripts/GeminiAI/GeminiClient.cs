@@ -198,7 +198,7 @@ namespace Assets.Scripts.GeminiAI
 
         #endregion
 
-        public async Task<string> GenerateMultiModalRequestAsync(string input)
+        public Task GenerateMultiModalRequestAsync(string input)
         {
             try
             {
@@ -216,13 +216,16 @@ namespace Assets.Scripts.GeminiAI
                 );
 
                 var serializedRequestBody = JsonConvert.SerializeObject(requestBody, _serializerSettings);
+
+                Task.Run(() => Send(serializedRequestBody, WebSocketMessageType.Text));
             }
             catch (Exception ex)
             {
                 Debug.LogError($"Error generating content: {ex.Message}");
                 Debug.LogError(ex.StackTrace);
-                return null;
             }
+
+            return Task.CompletedTask;
         }
 
 

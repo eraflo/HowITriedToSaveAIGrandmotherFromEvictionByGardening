@@ -135,7 +135,7 @@ public class GeminiClientEditor : Editor
 
         if (GUILayout.Button("Generate"))
         {
-            Task.Run(async () => await myScript.Send(prompt));
+            myScript.GenerateMultiModalRequestAsync(prompt);
 
             // Deactivate the button
             GUI.enabled = false;
@@ -171,39 +171,8 @@ public class GeminiClientEditor : Editor
         myScript.GenerationConfig.TopP = EditorGUILayout.FloatField("Top P", myScript.GenerationConfig.TopP);
         myScript.GenerationConfig.TopK = EditorGUILayout.FloatField("Top K", myScript.GenerationConfig.TopK);
 
-        // Fields for StopSequences
-        EditorGUILayout.LabelField("Stop Sequences", EditorStyles.boldLabel);
-        EditorGUILayout.BeginHorizontal();
-        EditorGUILayout.LabelField("Stop Sequence", GUILayout.Width(100));
-
-        EditorGUILayout.BeginVertical();
-
-        if(myScript.GenerationConfig.StopSequences == null)
-        {
-            myScript.GenerationConfig.StopSequences = new List<object>();
-        }
-
-        for (int i = 0; i < myScript.GenerationConfig.StopSequences.Count; i++)
-        {
-            EditorGUILayout.BeginHorizontal();
-            myScript.GenerationConfig.StopSequences[i] = EditorGUILayout.TextField(myScript.GenerationConfig.StopSequences[i].ToString());
-            if (GUILayout.Button("Remove"))
-            {
-                myScript.GenerationConfig.StopSequences.RemoveAt(i);
-            }
-            EditorGUILayout.EndHorizontal();
-        }
-
-        if (GUILayout.Button("Add"))
-        {
-            myScript.GenerationConfig.StopSequences.Add("");
-        }
-
-        EditorGUILayout.EndVertical();
-
-        EditorGUILayout.EndHorizontal();
-
         EditorGUILayout.Space();
+    }
 
     private void AIGenerationConfigResponseModalitiesDisplay(GeminiClient myScript)
     {
@@ -292,6 +261,42 @@ public class GeminiClientEditor : Editor
         EditorGUILayout.Space();
     }
 
+    private void AIGenerationConfigStopSequencesDisplay(GeminiClient myScript)
+    {
+        EditorGUILayout.LabelField("Stop Sequences", EditorStyles.boldLabel);
+        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.LabelField("Stop Sequence", GUILayout.Width(100));
+
+        EditorGUILayout.BeginVertical();
+
+        if (myScript.GenerationConfig.StopSequences == null)
+        {
+            myScript.GenerationConfig.StopSequences = new List<object>();
+        }
+
+        for (int i = 0; i < myScript.GenerationConfig.StopSequences.Count; i++)
+        {
+            EditorGUILayout.BeginHorizontal();
+            myScript.GenerationConfig.StopSequences[i] = EditorGUILayout.TextField(myScript.GenerationConfig.StopSequences[i].ToString());
+            if (GUILayout.Button("Remove"))
+            {
+                myScript.GenerationConfig.StopSequences.RemoveAt(i);
+            }
+            EditorGUILayout.EndHorizontal();
+        }
+
+        if (GUILayout.Button("Add"))
+        {
+            myScript.GenerationConfig.StopSequences.Add("");
+        }
+
+        EditorGUILayout.EndVertical();
+
+        EditorGUILayout.EndHorizontal();
+
+        EditorGUILayout.Space();
+    }
+
     private void SafetySettingsDisplay(GeminiClient myScript)
     {
         EditorGUILayout.LabelField("Safety Settings", EditorStyles.boldLabel);
@@ -353,34 +358,14 @@ public class GeminiClientEditor : Editor
         EditorGUILayout.EndHorizontal();
 
         EditorGUILayout.Space();
-
-
-
-        // Draw field with prompt and button
-        EditorGUILayout.LabelField("Generate Content", EditorStyles.boldLabel);
-        prompt = EditorGUILayout.TextField("Prompt", prompt);
-
-
-        if (GUILayout.Button("Generate"))
-        {
-            Task.Run(async () => await GeneratePrompt(myScript, prompt));
-
-            // Deactivate the button
-            GUI.enabled = false;
-        }
-
-        // Display the response
-        if(!string.IsNullOrEmpty(response))
-        {
-            EditorGUILayout.LabelField("Response", EditorStyles.boldLabel);
-            EditorGUILayout.TextArea(response);
-        }
     }
+
+    #endregion
 
     private async Task GeneratePrompt(GeminiClient client, string prompt)
     {
         Debug.Log("Generating content...");
-        Task<string> task = client.GenerateContentAsync(prompt, new CancellationTokenSource().Token);
+        Task<string> task = client.GenerateTextContentAsync(prompt, new CancellationTokenSource().Token);
         await task;
 
         Debug.Log("Content generated.");
