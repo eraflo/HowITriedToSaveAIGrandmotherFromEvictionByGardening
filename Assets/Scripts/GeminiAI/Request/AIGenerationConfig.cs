@@ -6,6 +6,14 @@ using System.Threading.Tasks;
 
 namespace Assets.Scripts.GeminiAI.Request
 {
+    public enum Modality
+    {
+        Text,
+        Image,
+        Audio,
+        Video
+    }
+
     [Serializable]
     public class AIGenerationConfig
     {
@@ -14,5 +22,8 @@ namespace Assets.Scripts.GeminiAI.Request
         public float TopP { get; set; }
         public float TopK { get; set; }
         public List<object> StopSequences { get; set; }
+        public string[] ResponseModalities { get; set; }
+        public SpeechConfig SpeechConfig { get; set; }
+
     }
 }
