@@ -1,4 +1,5 @@
 ﻿using Assets.Scripts.GeminiAI.Request;
+using Assets.Scripts.GeminiAI.Request.RequestParts;
 using Assets.Scripts.GeminiAI.Response;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -196,6 +197,34 @@ namespace Assets.Scripts.GeminiAI
         }
 
         #endregion
+
+        public async Task<string> GenerateMultiModalRequestAsync(string input)
+        {
+            try
+            {
+                var requestBody = APIRequestFactory.CreateRequest(
+                    prompt: input,
+                    parts: new RequestPart[]
+                    {
+                        new TextPart
+                        {
+                            Text = input
+                        }
+                    },
+                    generationConfig: GenerationConfig,
+                    safetySettings: SafetySettings.ToArray()
+                );
+
+                var serializedRequestBody = JsonConvert.SerializeObject(requestBody, _serializerSettings);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Error generating content: {ex.Message}");
+                Debug.LogError(ex.StackTrace);
+                return null;
+            }
+        }
+
 
         public async Task<string> GenerateTextContentAsync(string input, CancellationToken cancellationToken)
         {
