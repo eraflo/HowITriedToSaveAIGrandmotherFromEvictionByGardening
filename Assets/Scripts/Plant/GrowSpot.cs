@@ -7,8 +7,9 @@ namespace Plant
         [SerializeField] private GlobalPlantOptions plantOptions;
         [SerializeField] private GameObject dirtHolder;
         
-        public PlantObject plant { get; set; }
+        public PlantObject plant { get; private set; }
         
+        private bool _isDigged;
         private GameObject _currentPlant;
         private int _currentStage;
         private bool _fullyGrown;
@@ -37,7 +38,39 @@ namespace Plant
 
         private void OnTriggerEnter(Collider other)
         {
-            Debug.Log("OnTriggerEnter");
+            if (other.gameObject.name == "Trowel")
+            {
+                Dig();
+                return;
+            }
+        }
+
+        private void Dig()
+        {
+            if (_isDigged)
+            {
+                return;
+            }
+
+            _isDigged = true;
+            Destroy(dirtHolder);
+            dirtHolder = Instantiate(plantOptions.dirtPileDigged, transform);
+            dirtHolder.transform.localScale = new Vector3(40f, 40f, 40f);
+        }
+
+        private void Plant(PlantObject plantObject)
+        {
+            if (_currentPlant is not null)
+            {
+                return;
+            }
+            
+            plant = plantObject;
+            _currentPlant = Instantiate(plant.sproutStages[0], transform);
+            
+            Destroy(dirtHolder);
+            dirtHolder = Instantiate(plantOptions.dirtPileFilled, transform);
+            dirtHolder.transform.localScale = new Vector3(40f, 40f, 40f);
         }
 
         private void Grow()
