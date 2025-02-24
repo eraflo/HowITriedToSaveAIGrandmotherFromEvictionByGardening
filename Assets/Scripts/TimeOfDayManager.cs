@@ -1,6 +1,7 @@
 using UnityEngine;
+using Utils;
 
-public class TimeOfDayManager : MonoBehaviour
+public class TimeOfDayManager : SingletonMonoBehaviour<TimeOfDayManager>
 {
     [SerializeField] private Light sun;
     [SerializeField] private float timeScale = 1;
@@ -11,10 +12,23 @@ public class TimeOfDayManager : MonoBehaviour
     
     public int Minute { get; private set; }
     
-    private float _time;
+    public bool Paused { get; set; }
     
+    private float _time;
+
+    protected override void Awake()
+    {
+        base.Awake();
+        Reset();
+    }
+
     private void Update()
     {
+        if (Paused)
+        {
+            return;
+        }
+        
         _time += Time.deltaTime * timeScale;
         if (_time >= 1)
         {
@@ -35,6 +49,19 @@ public class TimeOfDayManager : MonoBehaviour
         }
 
         UpdateSunRotation();
+    }
+
+    public void Reset()
+    {
+        Hour = 7;
+        _time = 0f;
+        Paused = false;
+    }
+
+    public void NextDay()
+    {
+        Day++;
+        UiManager.Instance.DoNextDayTransition();
     }
 
     private void UpdateSunRotation()
