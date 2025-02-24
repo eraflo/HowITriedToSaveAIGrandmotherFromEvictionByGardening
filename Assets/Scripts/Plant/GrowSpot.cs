@@ -4,6 +4,9 @@ namespace Plant
 {
     public class GrowSpot : MonoBehaviour
     {
+        [SerializeField] private GlobalPlantOptions plantOptions;
+        [SerializeField] private GameObject dirtHolder;
+        
         public PlantObject plant { get; set; }
         
         private GameObject _currentPlant;
@@ -32,6 +35,11 @@ namespace Plant
             }
         }
 
+        private void OnTriggerEnter(Collider other)
+        {
+            Debug.Log("OnTriggerEnter");
+        }
+
         private void Grow()
         {
             Destroy(_currentPlant);
@@ -55,6 +63,7 @@ namespace Plant
             _currentStage = 0;
             _fullyGrown = false;
             _time = 0;
+            // TODO: add to inventory
         }
     }
 }

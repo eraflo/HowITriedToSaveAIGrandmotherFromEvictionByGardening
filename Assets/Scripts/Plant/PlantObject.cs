@@ -1,11 +1,16 @@
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "PlantObject", menuName = "Plant/PlantObject", order = 1)]
-public class PlantObject : ScriptableObject
+namespace Plant
 {
-    public GameObject[] sproutStages;
-    
-    public GameObject grownPlant;
-    
-    public int growthTime;
+    [CreateAssetMenu(fileName = "PlantObject", menuName = "Plant/PlantObject")]
+    public class PlantObject : ScriptableObject
+    {
+        public string plantName;
+        
+        public GameObject[] sproutStages;
+        
+        public GameObject grownPlant;
+        
+        public int growthTime;
+    }
 }
