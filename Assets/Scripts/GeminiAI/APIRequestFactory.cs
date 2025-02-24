@@ -60,88 +60,9 @@ namespace Assets.Scripts.GeminiAI
         }
 
         public static AIRequest CreateRequest(
-            string prompt,
-            AIGenerationConfig generationConfig = null
-        )
-        {
-            return new AIRequest
-            {
-                Contents = new RequestContent[]
-                {
-                    new RequestContent
-                    {
-                        Role = "user",
-                        Parts = new RequestPart[]
-                        {
-                            new TextPart
-                            {
-                                Text = prompt
-                            }
-                        }
-                    }
-                },
-                GenerationConfig = generationConfig,
-                SafetySettings = new SafetySettings[]
-                {
-                    new SafetySettings
-                    {
-                        Category = "HARM_CATEGORY_HARASSMENT",
-                        Threshold = EnumUtils.GetEnumFieldToString(SafetyThreshold.BLOCK_ONLY_HIGH)
-                    },
-                    new SafetySettings
-                    {
-                        Category = "HARM_CATEGORY_HATE_SPEECH",
-                        Threshold = EnumUtils.GetEnumFieldToString(SafetyThreshold.BLOCK_ONLY_HIGH)
-                    },
-                    new SafetySettings
-                    {
-                        Category = "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                        Threshold = EnumUtils.GetEnumFieldToString(SafetyThreshold.BLOCK_ONLY_HIGH)
-                    },
-                    new SafetySettings
-                    {
-                        Category = "HARM_CATEGORY_DANGEROUS_CONTENT",
-                        Threshold = EnumUtils.GetEnumFieldToString(SafetyThreshold.BLOCK_ONLY_HIGH)
-                    }
-                }
-            };
-        }
-
-        public static AIRequest CreateRequest(
-            string prompt,
-            SafetySettings[] safetySettings = null
-        )
-        {
-            return new AIRequest
-            {
-                Contents = new RequestContent[]
-                {
-                    new RequestContent
-                    {
-                        Role = "user",
-                        Parts = new RequestPart[]
-                        {
-                            new TextPart
-                            {
-                                Text = prompt
-                            }
-                        }
-                    }
-                },
-                GenerationConfig = new AIGenerationConfig
-                {
-                    MaxOutputTokens = 2048,
-                    Temperature = 1,
-                    TopP = 1,
-                    TopK = 1,
-                    StopSequences = new List<object>()
-                },
-                SafetySettings = safetySettings
-            };
-        }
-
-        public static AIRequest CreateRequest(
             string prompt, 
+            RequestPart[] parts = null,
+            string model = null,
             AIGenerationConfig generationConfig = null,
             SafetySettings[] safetySettings = null
         ) {
@@ -161,6 +82,7 @@ namespace Assets.Scripts.GeminiAI
                         }
                     }
                 },
+                Model = model,
                 GenerationConfig = generationConfig,
                 SafetySettings = safetySettings
             };
