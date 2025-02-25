@@ -27,9 +27,9 @@ namespace Plant
                 return;
             }
 
-            _time += Time.deltaTime * plant.growthTime;
+            _time += Time.deltaTime;
             
-            if (_time >= 1)
+            if (_time >= plant.growthTime)
             {
                 Grow();
                 _time = 0;
@@ -43,6 +43,16 @@ namespace Plant
                 Dig();
                 return;
             }
+
+            if (other.gameObject.name.StartsWith("Seed"))
+            {
+                if (Plant(other.gameObject.GetComponent<Seed>().plant))
+                {
+                    Destroy(other.gameObject);
+                }
+                
+                return;
+            }
         }
 
         private void Dig()
@@ -53,24 +63,26 @@ namespace Plant
             }
 
             _isDigged = true;
-            Destroy(dirtHolder);
-            dirtHolder = Instantiate(plantOptions.dirtPileDigged, transform);
-            dirtHolder.transform.localScale = new Vector3(40f, 40f, 40f);
+            SetDirtPile(plantOptions.dirtPileDigged);
         }
 
-        private void Plant(PlantObject plantObject)
+        private bool Plant(PlantObject plantObject)
         {
+            if (!_isDigged)
+            {
+                return false;
+            }
+            
             if (_currentPlant is not null)
             {
-                return;
+                return false;
             }
             
             plant = plantObject;
             _currentPlant = Instantiate(plant.sproutStages[0], transform);
             
-            Destroy(dirtHolder);
-            dirtHolder = Instantiate(plantOptions.dirtPileFilled, transform);
-            dirtHolder.transform.localScale = new Vector3(40f, 40f, 40f);
+            SetDirtPile(plantOptions.dirtPileFilled);
+            return true;
         }
 
         private void Grow()
@@ -97,6 +109,13 @@ namespace Plant
             _fullyGrown = false;
             _time = 0;
             // TODO: add to inventory
+        }
+
+        private void SetDirtPile(GameObject newDirt)
+        {
+            Destroy(dirtHolder);
+            dirtHolder = Instantiate(newDirt, transform);
+            dirtHolder.transform.localScale = new Vector3(40f, 40f, 40f);
         }
     }
 }
