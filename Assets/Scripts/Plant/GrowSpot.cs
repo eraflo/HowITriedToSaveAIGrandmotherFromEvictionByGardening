@@ -79,7 +79,7 @@ namespace Plant
             }
             
             plant = plantObject;
-            _currentPlant = Instantiate(plant.sproutStages[0], transform);
+            SetPlant(plant.sproutStages[0]);
             
             SetDirtPile(plantOptions.dirtPileFilled);
             return true;
@@ -87,16 +87,15 @@ namespace Plant
 
         private void Grow()
         {
-            Destroy(_currentPlant);
             _currentStage++;
 
             if (_currentStage < plant.sproutStages.Length)
             {
-                _currentPlant = Instantiate(plant.sproutStages[_currentStage], transform);
+                SetPlant(plant.sproutStages[_currentStage]);
             }
             else
             {
-                _currentPlant = Instantiate(plant.grownPlant, transform);
+                SetPlant(plant.grownPlant);
                 _fullyGrown = true;
             }
         }
@@ -116,6 +115,17 @@ namespace Plant
             Destroy(dirtHolder);
             dirtHolder = Instantiate(newDirt, transform);
             dirtHolder.transform.localScale = new Vector3(40f, 40f, 40f);
+        }
+
+        private void SetPlant(GameObject newPlant)
+        {
+            if (_currentPlant is not null)
+            {
+                Destroy(_currentPlant);
+            }
+            
+            _currentPlant = Instantiate(newPlant, transform);
+            _currentPlant.transform.localPosition -= new Vector3(0, 0.2f, 0);
         }
     }
 }
