@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit;
 
 namespace Plant
 {
@@ -9,7 +10,7 @@ namespace Plant
         
         public GameObject[] sproutStages;
         
-        public GameObject grownPlant;
+        public XRGrabInteractable grownPlant;
         
         public int growthTime;
     }

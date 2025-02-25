@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit;
 
 namespace Plant
 {
@@ -95,12 +96,13 @@ namespace Plant
             }
             else
             {
-                SetPlant(plant.grownPlant);
+                SetPlant(plant.grownPlant.gameObject);
+                _currentPlant.GetComponent<XRGrabInteractable>().selectExited.AddListener(Harvest);
                 _fullyGrown = true;
             }
         }
 
-        private void Harvest()
+        private void Harvest(SelectExitEventArgs args)
         {
             Destroy(_currentPlant);
             plant = null;
