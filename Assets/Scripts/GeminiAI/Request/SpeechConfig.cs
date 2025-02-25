@@ -1,24 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Assets.Scripts.GeminiAI.Enums;
 
 namespace Assets.Scripts.GeminiAI.Request
 {
-    public enum PrebuiltVoice
-    {
-        None,
-        Puck,
-        Charon,
-        Kore,
-        Fenrir,
-        Aoede
-    }
-
     public class PrebuiltVoiceConfig
     {
-        public string VoiceName { get; set; }
+        public PrebuiltVoice VoiceName { get; set; }
     }
 
     public class VoiceConfig

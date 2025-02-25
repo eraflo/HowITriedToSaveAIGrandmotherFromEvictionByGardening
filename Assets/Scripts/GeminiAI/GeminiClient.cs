@@ -1,6 +1,10 @@
-﻿using Assets.Scripts.GeminiAI.Request;
-using Assets.Scripts.GeminiAI.Request.RequestParts;
+﻿using Assets.Scripts.GeminiAI.Enums;
+using Assets.Scripts.GeminiAI.FunctionsCall;
+using Assets.Scripts.GeminiAI.Request;
+using Assets.Scripts.GeminiAI.Request.Bidi;
+using Assets.Scripts.GeminiAI.Parts;
 using Assets.Scripts.GeminiAI.Response;
+using Assets.Scripts.Utils;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System;
@@ -16,7 +20,14 @@ namespace Assets.Scripts.GeminiAI
     [Serializable]
     public class GeminiOptions
     {
+        public string Model;
+        public string Interaction;
         public string ApiKey;
+
+        [Tooltip("Don't do anything for http connexion")]
+        public bool HasSession;
+
+        [HideInInspector]
         public string Url;
     }
 
@@ -34,24 +45,32 @@ namespace Assets.Scripts.GeminiAI
         private HttpClient _httpClient;
         private ClientWebSocket _webSocket;
 
-        private Action<string> _onResponseReceived;
-        private Action<string> _onOpenConnexion;
+        private Action<string> _onConnected;
         private Action<string> _onCloseConnexion;
-        private Action<string> _onMessageReceived;
+        private Action<string> _onResponseReceived;
+        private Action<string> _onContentReceived;
+
+        private Tool _tool = new();
 
         private readonly JsonSerializerSettings _serializerSettings = new()
         {
             ContractResolver = new DefaultContractResolver
             {
-                NamingStrategy = new CamelCaseNamingStrategy()
+                NamingStrategy = new SnakeCaseNamingStrategy()
             },
+            NullValueHandling = NullValueHandling.Ignore,
             Formatting = Formatting.None
         };
 
+        private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
+        private bool _hasSendRequest = false;
+        private bool _isConnected = false;
+
         public ConnexionType ConnexionType { get; set; } = ConnexionType.Http;
 
-        public AIGenerationConfig GenerationConfig { get; set; } = new();
+        public GenerationConfig GenerationConfig { get; set; } = new();
         public List<SafetySettings> SafetySettings { get; set; } = new();
+
 
         public GeminiOptions Options { get => _options; }
 
@@ -67,7 +86,10 @@ namespace Assets.Scripts.GeminiAI
             {
                 Debug.LogError("Gemini URL is required.");
             }
+        }
 
+        private void OnEnable()
+        {
             // Http client for simple API requests like generating text content
             if (_httpClient == null)
             {
@@ -79,58 +101,179 @@ namespace Assets.Scripts.GeminiAI
             {
                 _webSocket = new ClientWebSocket();
 
+                _onConnected += OnConnected;
                 _onResponseReceived += OnResponseReceived;
-                _onOpenConnexion += OnOpenConnexion;
-                _onCloseConnexion += OnCloseConnexion;
-                _onMessageReceived += OnMessageReceived;
+                _onContentReceived += OnContentReceived;
+            }
+
+            GenerateURL();
+
+            Debug.Log($"Gemini URL: {_options.Url}");
+        }
+
+        private void OnDisable()
+        {
+            _httpClient?.Dispose();
+            _webSocket?.Dispose();
+
+            _onConnected -= OnConnected;
+            _onResponseReceived -= OnResponseReceived;
+            _onContentReceived -= OnContentReceived;
+        }
+
+        public void ChangeConnexionType(ConnexionType connexionType, string interaction)
+        {
+            ConnexionType = connexionType;
+            _options.Interaction = interaction;
+
+            GenerateURL();
+        }
+
+        public T GetResponseObject<T>(string response)
+        {
+            return JsonConvert.DeserializeObject<T>(response);
+        }
+
+        private void GenerateURL()
+        {
+            switch (ConnexionType)
+            {
+                case ConnexionType.Http:
+                    _options.Url = "https://generativelanguage.googleapis.com/v1beta/";
+                    _options.Url += _options.Model + ":" + _options.Interaction;
+                    break;
+                case ConnexionType.WebSocket:
+                    _options.Url = "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.";
+                    _options.Url += _options.Interaction;
+                    break;
             }
         }
 
         #region WebSocket Action
 
-        public async Task Connect(string url, string key, string model)
+        public async Task Connect(string model, bool hasSession)
         {
             if (_webSocket.State == WebSocketState.Open)
             {
+                _isConnected = true;
                 return;
             }
 
+            _isConnected = false;
 
             Debug.Log("Connecting to Gemini WebSocket");
 
-            await _webSocket.ConnectAsync(new Uri(url + $"?key={key}"), CancellationToken.None);
+            var url = _options.Url;
+            var key = _options.ApiKey;
+
+            url += $"?key={key}";
+
+            if(hasSession)
+            {
+                url += $"&sessionId={Guid.NewGuid()}";
+            }
+
+            await _webSocket.ConnectAsync(new Uri(url), CancellationToken.None);
 
             Task.Run(() => Receive());
+
+            var setup = new SendMessage
+            {
+                Setup = new BidiGenerateContentSetup
+                {
+                    Model = model,
+                    GenerationConfig = GenerationConfig == null ? null : GenerationConfig,
+                    Tools = _tool == null ? null : new Tool[] { _tool }
+                }
+            };
+
+            Task.Run(() => Send(setup, WebSocketMessageType.Text));
         }
 
-        public async Task Send(string json, WebSocketMessageType messageType)
+        public async Task Connect(string model)
         {
-            var buffer = new ArraySegment<byte>(System.Text.Encoding.UTF8.GetBytes(json));
-            await _webSocket.SendAsync(buffer, messageType, true, CancellationToken.None);
+            await Connect(model, _options.HasSession);
         }
 
-        public async Task Receive()
+        public async Task Send(SendMessage message, WebSocketMessageType messageType)
         {
-            while (true) {
+            // Make sure only one thread is sending messages at a time
+            await _semaphore.WaitAsync();
+            try
+            {
+                var json = JsonConvert.SerializeObject(message, _serializerSettings);
+
+                //Debug.Log(json);
+
+                _hasSendRequest = true;
+
+                var buffer = new ArraySegment<byte>(System.Text.Encoding.UTF8.GetBytes(json));
+                await _webSocket.SendAsync(buffer, messageType, true, CancellationToken.None);
+            }
+            finally
+            {
+                _semaphore.Release();
+            }
+
+        }
+
+        private async Task Receive()
+        {
+            var continueReceiving = true;
+            var lastResponse = "";
+            var closeStatus = WebSocketCloseStatus.Empty;
+            var closeStatusDescription = "";
+            var messageType = WebSocketMessageType.Text;
+
+
+            while (continueReceiving) {
                 try
                 {
-                    var responseBuffer = new ArraySegment<byte>(new byte[1024]);
+                    if(!_hasSendRequest)
+                    {
+                        await Task.Delay(100);
+                        continue;
+                    }
+
+                    var byteArray = new byte[GenerationConfig.MaxOutputTokens];
+                    var responseBuffer = new ArraySegment<byte>(byteArray);
                     var response = "";
+                    var continueGettingData = true;
 
                     do
                     {
                         var result = await _webSocket.ReceiveAsync(responseBuffer, CancellationToken.None);
                         response += System.Text.Encoding.UTF8.GetString(responseBuffer.Array, 0, result.Count);
-                    } while (!_webSocket.CloseStatus.HasValue);
 
-                    _onResponseReceived?.Invoke(response);
+                        if (result.CloseStatus != null)
+                            closeStatus = result.CloseStatus.Value;
 
+                        closeStatusDescription = result.CloseStatusDescription;
+                        messageType = result.MessageType;
+
+                        continueGettingData = !result.EndOfMessage;
+                    } while (continueGettingData);
+
+                    if (response != lastResponse && !string.IsNullOrEmpty(response))
+                    {
+                        _onResponseReceived?.Invoke(response);
+                        lastResponse = response;
+                    }
+
+                    // Free the buffer
+                    Array.Clear(responseBuffer.Array, 0, responseBuffer.Count);
                 }
                 catch (Exception ex)
                 {
                     Debug.LogError($"Error receiving message: {ex.Message}");
                     Debug.LogError(ex.StackTrace);
+                    Debug.LogError($"Close status: {closeStatus}");
+                    Debug.LogError($"Close status description: {closeStatusDescription}");
+                    Debug.LogError($"Message type: {messageType}");
+                    continueReceiving = false;
                 }
+
+                await Task.Delay(100);
             }
         }
 
@@ -147,22 +290,21 @@ namespace Assets.Scripts.GeminiAI
         #endregion
 
         #region WebSocket Events
-        public void OnResponseReceived(string onResponseReceived)
+
+        private void OnResponseReceived(string onResponseReceived)
         {
             switch (_webSocket.State)
             {
                 case WebSocketState.Open:
-                    var response = onResponseReceived;
-                    if (response.Contains("message"))
-                    {
-                        _onMessageReceived?.Invoke(onResponseReceived);
-                    }
-                    else
-                    {
-                        _onOpenConnexion?.Invoke(onResponseReceived);
-                    }
+
+                    // First response is the connection confirmation
+                    if (!_isConnected)
+                        _onConnected?.Invoke(onResponseReceived);
+
+                    _onContentReceived?.Invoke(onResponseReceived);
                     break;
                 case WebSocketState.Closed:
+                case WebSocketState.CloseReceived:
                     _onCloseConnexion?.Invoke(onResponseReceived);
                     break;
                 default:
@@ -171,29 +313,63 @@ namespace Assets.Scripts.GeminiAI
             }
         }
 
-        public void OnOpenConnexion(string response)
+
+
+        private void OnConnected(string response)
         {
-            var setup = new SetupAI
-            {
-                Setup = new ModelAI
-                {
-                    Model = response
-                }
-            };
+            Debug.Log("WebSocket connection established.");
+            _onConnected -= OnConnected;
+            _onCloseConnexion += OnCloseConnexion;
 
-            var setupJson = JsonConvert.SerializeObject(setup, _serializerSettings);
-
-            Task.Run(() => Send(setupJson, WebSocketMessageType.Text));
+            _isConnected = true;
         }
 
-        public void OnCloseConnexion(string response)
+        private void OnCloseConnexion(string response)
         {
             Debug.Log("WebSocket connection closed.");
+            _onCloseConnexion -= OnCloseConnexion;
+            _onConnected += OnConnected;
+
+            _isConnected = false;
         }
 
-        public void OnMessageReceived(string response)
+        private void OnContentReceived(string response)
         {
-            Debug.Log(response);
+
+        }
+
+
+
+        public void ListenToContentReceived(Action<string> onContentReceived)
+        {
+            _onContentReceived += onContentReceived;
+        }
+
+        public void ListenToCloseConnexion(Action<string> onCloseConnexion)
+        {
+            _onCloseConnexion += onCloseConnexion;
+        }
+
+        public void ListenToConnected(Action<string> onResponseReceived)
+        {
+            _onConnected += onResponseReceived;
+        }
+
+
+
+        public void RemoveContentReceivedListener(Action<string> onContentReceived)
+        {
+            _onContentReceived -= onContentReceived;
+        }
+
+        public void RemoveCloseConnexionListener(Action<string> onCloseConnexion)
+        {
+            _onCloseConnexion -= onCloseConnexion;
+        }
+
+        public void RemoveConnectedListener(Action<string> onResponseReceived)
+        {
+            _onConnected -= onResponseReceived;
         }
 
         #endregion
@@ -202,22 +378,30 @@ namespace Assets.Scripts.GeminiAI
         {
             try
             {
-                var requestBody = APIRequestFactory.CreateRequest(
-                    prompt: input,
-                    parts: new RequestPart[]
+                var requestBody = new SendMessage
+                {
+                    ClientContent = new BidiGenerateContentClientContent
                     {
-                        new TextPart
+                        Turns = new Content[]
                         {
-                            Text = input
-                        }
-                    },
-                    generationConfig: GenerationConfig,
-                    safetySettings: SafetySettings.ToArray()
-                );
+                            new Content
+                            {
+                                Role = Role.User,
+                                Parts = new Part[]
+                                {
+                                    new Part
+                                    {
+                                        Text = input
+                                    }
+                                }
+                            }
 
-                var serializedRequestBody = JsonConvert.SerializeObject(requestBody, _serializerSettings);
+                        },
+                        TurnComplete = true
+                    }
+                };
 
-                Task.Run(() => Send(serializedRequestBody, WebSocketMessageType.Text));
+                Task.Run(() => Send(requestBody, WebSocketMessageType.Text));
             }
             catch (Exception ex)
             {
@@ -228,6 +412,30 @@ namespace Assets.Scripts.GeminiAI
             return Task.CompletedTask;
         }
 
+        /// <summary>
+        /// Declare a new function that can be used in the generation of the content
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="description"></param>
+        /// <param name="parameter"></param>
+        public void DeclareNewFunction(string name, string description = null, Parameter parameter = null)
+        {
+            var newFunctionCall = new FunctionDeclaration()
+            {
+                Name = name,
+                Description = description,
+                Parameters = parameter
+            };
+
+            if (_tool.FunctionDeclarations == null)
+            {
+                _tool.FunctionDeclarations = new FunctionDeclaration[] { newFunctionCall };
+                return;
+            }
+
+            _tool.FunctionDeclarations = ArrayUtils.Add(_tool.FunctionDeclarations, newFunctionCall);
+        }
+
 
         public async Task<string> GenerateTextContentAsync(string input, CancellationToken cancellationToken)
         {
@@ -235,9 +443,9 @@ namespace Assets.Scripts.GeminiAI
             {
                 var requestBody = APIRequestFactory.CreateRequest(
                     prompt: input, 
-                    parts: new RequestPart[]
+                    parts: new Part[]
                     {
-                        new TextPart
+                        new Part
                         {
                             Text = input
                         }
@@ -257,7 +465,7 @@ namespace Assets.Scripts.GeminiAI
                 var responseBody = await response.Content.ReadAsStringAsync();
 
                 // Deserialize the response
-                var geminiResponse = JsonConvert.DeserializeObject<AIResponse>(responseBody);
+                var geminiResponse = GetResponseObject<GenerateContentResponse>(responseBody);
 
                 // Get the text from the response
                 var geminiResponseText = geminiResponse?.Candidates[0].Content.Parts[0].Text;
