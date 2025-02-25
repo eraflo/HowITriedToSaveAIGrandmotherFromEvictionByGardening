@@ -11,6 +11,7 @@ namespace Plant
         public PlantObject plant { get; private set; }
         
         private bool _isDigged;
+        private bool _isWatered;
         private GameObject _currentPlant;
         private int _currentStage;
         private bool _fullyGrown;
@@ -25,6 +26,12 @@ namespace Plant
 
             if (_fullyGrown)
             {
+                return;
+            }
+
+            if (!_isWatered)
+            {
+                // TODO: dead plant
                 return;
             }
 
@@ -52,6 +59,12 @@ namespace Plant
                     Destroy(other.gameObject);
                 }
                 
+                return;
+            }
+
+            if (other.gameObject.name == "Watering Can")
+            {
+                Water();
                 return;
             }
         }
@@ -86,6 +99,16 @@ namespace Plant
             return true;
         }
 
+        private void Water()
+        {
+            if (_isWatered)
+            {
+                return;
+            }
+
+            _isWatered = true;
+        }
+
         private void Grow()
         {
             _currentStage++;
@@ -106,6 +129,8 @@ namespace Plant
         {
             Destroy(_currentPlant);
             plant = null;
+            _isDigged = false;
+            _isWatered = false;
             _currentStage = 0;
             _fullyGrown = false;
             _time = 0;
