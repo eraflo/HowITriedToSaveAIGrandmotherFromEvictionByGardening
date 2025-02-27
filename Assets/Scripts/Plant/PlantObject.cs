@@ -11,6 +11,8 @@ namespace Plant
         public GameObject[] sproutStages;
         
         public XRGrabInteractable grownPlant;
+
+        public GameObject weed;
         
         public GrowType growType;
         
