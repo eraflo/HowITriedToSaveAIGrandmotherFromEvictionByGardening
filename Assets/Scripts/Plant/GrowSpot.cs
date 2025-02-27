@@ -16,6 +16,7 @@ namespace Plant
         private int _currentStage;
         private bool _fullyGrown;
         private float _time;
+        private int _previousDay;
 
         private void Update()
         {
@@ -35,12 +36,25 @@ namespace Plant
                 return;
             }
 
-            _time += Time.deltaTime;
-            
-            if (_time >= plant.growthTime)
+            if (plant.growType == GrowType.Time)
             {
+                _time += Time.deltaTime;
+                
+                if (_time >= plant.growthTimeSeconds)
+                {
+                    Grow();
+                    _time = 0;
+                }
+            }
+            else
+            {
+                if (_previousDay == TimeOfDayManager.Instance.Day)
+                {
+                    return;
+                }
+                
+                _previousDay = TimeOfDayManager.Instance.Day;
                 Grow();
-                _time = 0;
             }
         }
 
