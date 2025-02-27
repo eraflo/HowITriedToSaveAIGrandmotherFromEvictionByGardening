@@ -13,5 +13,7 @@ namespace Plant
         public XRGrabInteractable grownPlant;
         
         public int growthTime;
+
+        public int sellValue;
     }
 }

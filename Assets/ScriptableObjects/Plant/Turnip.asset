@@ -19,3 +19,4 @@ MonoBehaviour:
   grownPlant: {fileID: 1161256109565214490, guid: 7dd386cd6debd0a4bb7c81ebb02c9cb8,
     type: 3}
   growthTime: 5
+  sellValue: 5
