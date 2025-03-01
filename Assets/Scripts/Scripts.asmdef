@@ -1,7 +1,9 @@
 {
     "name": "Scripts",
     "rootNamespace": "",
-    "references": [],
+    "references": [
+        "GUID:fcf4fc281d895334da97cd1cd2603d83"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [
         "Android",

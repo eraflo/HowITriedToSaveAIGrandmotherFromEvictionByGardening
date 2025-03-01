@@ -11,12 +11,23 @@ using System.Threading.Tasks;
 using UnityEditor;
 using UnityEditor.PackageManager;
 using UnityEngine;
+using Assets.Scripts.Audio;
+using JD.EditorAudioUtils;
+using UnityEditor.Experimental.GraphView;
+using System.IO;
+using System;
+using System.Linq;
+using UnityEngine.XR;
 
 [CustomEditor(typeof(GeminiClient)), CanEditMultipleObjects]
 public class GeminiClientEditor : Editor
 {
     private string response = "";
     private string prompt = "";
+
+    private string audioResponse = "";
+
+    private string responseMimeType = "text/plain";
 
     private List<string> safetyCategories = new List<string>();
     private List<string> safetyThresholds = new List<string>();
@@ -171,9 +182,67 @@ public class GeminiClientEditor : Editor
                 {
                     receivedResponse = true;
                     Debug.Log("Response received");
+
+                    EditorApplication.delayCall += () =>
+                    {
+                        var audioConverter = new AudioConverter();
+                        var bytes = audioConverter.ConvertFrom64String(audioResponse);
+                        var audioClip = audioConverter.ConvertBytesToAudioClip(bytes, 24000, 2);
+
+                        try { 
+                            Debug.Log(EditorAudioUtility.LastPlayedPreviewClip);
+                            EditorAudioUtility.PlayPreviewClip(audioClip);
+                            Debug.Log(EditorAudioUtility.LastPlayedPreviewClip);
+                        }
+                        catch (Exception e)
+                        {
+                            Debug.Log(e.Message);
+                        }
+
+                        //var path = EditorUtility.SaveFilePanel("Save audio clip", Application.persistentDataPath, "audio", "wav");
+                        //var audioFileManager = new AudioFileManager(path);
+
+
+                        //if (!string.IsNullOrEmpty(path))
+                        //{
+                        //    audioFileManager.WriteSamples(bytes);
+                        //}
+
+                        //audioFileManager.Dispose();
+
+
+
+                    };
+
                 }
                 else
-                    this.response += receiveMessageObj.ServerContent.ModelTurn.Parts[0].Text;
+                {
+                    if (receiveMessageObj.ServerContent.ModelTurn.Parts != null)
+                    {
+                        foreach (var part in receiveMessageObj.ServerContent.ModelTurn.Parts)
+                        {
+                            if (part.Text != null)
+                            {
+                                this.response += part.Text;
+                                this.responseMimeType = MimeType.TEXT;
+                            }
+                            else if (part.InlineData != null)
+                            {
+                                var mimeTypeFull = part.InlineData.MimeType;
+                                var mimeType = mimeTypeFull.Split(';')[0];
+
+                                Debug.Log("Mime type: " + mimeTypeFull);
+
+                                if (mimeType == MimeType.PCM)
+                                {
+                                    var rateString = mimeTypeFull.Split(';')[1];
+                                    var rate = int.Parse(rateString.Split('=')[1]);
+                                    audioResponse += part.InlineData.Data;
+                                }
+                            }
+                        }
+                    }
+                }
             });
 
 
@@ -200,7 +269,7 @@ public class GeminiClientEditor : Editor
         }
 
         // Display the response
-        if (!string.IsNullOrEmpty(response))
+        if (!string.IsNullOrEmpty(response) && responseMimeType == MimeType.TEXT)
         {
             EditorGUILayout.LabelField("Response", EditorStyles.boldLabel);
 

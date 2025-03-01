@@ -73,63 +73,70 @@ namespace Assets.Scripts.Audio
 
             while (isProcessingActive)
             {
-                // Get current position in microphone clip
-                int currPos = Microphone.GetPosition(Microphone.devices[0]);
-
-                if (currPos != prevPos)
+                try
                 {
-                    // Calculate number of samples to read
-                    int samplesToRead = 0;
+                    // Get current position in microphone clip
+                    int currPos = Microphone.GetPosition(Microphone.devices[0]);
 
-                    if (currPos > prevPos)
+                    if (currPos != prevPos)
                     {
-                        samplesToRead = currPos - prevPos;
-                    }
-                    else
-                    {
-                        // Wrap-around (buffer has looped)
-                        samplesToRead = (microphoneClip.samples - prevPos) + currPos;
-                    }
+                        // Calculate number of samples to read
+                        int samplesToRead = 0;
 
-                    // Read samples from microphone clip
-                    float[] samples = new float[samplesToRead];
-
-                    if (currPos > prevPos)
-                    {
-                        microphoneClip.GetData(samples, prevPos);
-                    }
-                    else
-                    {
-                        // Read in two parts because of wrap-around
-                        float[] firstPart = new float[microphoneClip.samples - prevPos];
-                        float[] secondPart = new float[currPos];
-
-                        microphoneClip.GetData(firstPart, prevPos);
-                        microphoneClip.GetData(secondPart, 0);
-
-                        // Combine both parts
-                        Array.Copy(firstPart, 0, samples, 0, firstPart.Length);
-                        Array.Copy(secondPart, 0, samples, firstPart.Length, secondPart.Length);
-                    }
-
-                    // Add samples to buffer
-                    foreach (float sample in samples)
-                    {
-                        audioBuffer.Add(sample);
-                        currentBufferIndex++;
-
-                        // When buffer is full, process it
-                        if (currentBufferIndex >= bufferSize)
+                        if (currPos > prevPos)
                         {
-                            float[] bufferToProcess = audioBuffer.ToArray();
-                            audioBuffer.Clear();
-                            currentBufferIndex = 0;
-
-                            onGetAudioFlux?.Invoke(bufferToProcess);
+                            samplesToRead = currPos - prevPos;
                         }
-                    }
+                        else
+                        {
+                            // Wrap-around (buffer has looped)
+                            samplesToRead = (microphoneClip.samples - prevPos) + currPos;
+                        }
 
-                    prevPos = currPos;
+                        // Read samples from microphone clip
+                        float[] samples = new float[samplesToRead];
+
+                        if (currPos > prevPos)
+                        {
+                            microphoneClip.GetData(samples, prevPos);
+                        }
+                        else
+                        {
+                            // Read in two parts because of wrap-around
+                            float[] firstPart = new float[microphoneClip.samples - prevPos];
+                            float[] secondPart = new float[currPos];
+
+                            microphoneClip.GetData(firstPart, prevPos);
+                            microphoneClip.GetData(secondPart, 0);
+
+                            // Combine both parts
+                            Array.Copy(firstPart, 0, samples, 0, firstPart.Length);
+                            Array.Copy(secondPart, 0, samples, firstPart.Length, secondPart.Length);
+                        }
+
+                        // Add samples to buffer
+                        foreach (float sample in samples)
+                        {
+                            audioBuffer.Add(sample);
+                            currentBufferIndex++;
+
+                            // When buffer is full, process it
+                            if (currentBufferIndex >= bufferSize)
+                            {
+                                float[] bufferToProcess = audioBuffer.ToArray();
+                                audioBuffer.Clear();
+                                currentBufferIndex = 0;
+
+                                onGetAudioFlux?.Invoke(bufferToProcess);
+                            }
+                        }
+
+                        prevPos = currPos;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError(e.Message);
                 }
 
                 yield return null;

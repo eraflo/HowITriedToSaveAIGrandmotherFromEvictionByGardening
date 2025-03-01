@@ -103,5 +103,24 @@ namespace Assets.Scripts.Audio
                 return stream.ToArray();
             }
         }
+
+        public byte[] ConvertFrom64String(string base64String)
+        {
+            return Convert.FromBase64String(base64String);
+        }
+
+        public AudioClip ConvertBytesToAudioClip(byte[] bytes, int sampleRate, int channels)
+        {
+            float[] samples = new float[bytes.Length / 2];
+            for (int i = 0; i < samples.Length; i++)
+            {
+                samples[i] = (float)BitConverter.ToInt16(bytes, i * 2) / 32768.0f;
+            }
+
+            AudioClip audioClip = AudioClip.Create("AudioClip", samples.Length, channels, sampleRate, false);
+            audioClip.SetData(samples, 0);
+
+            return audioClip;
+        }
     }
 }

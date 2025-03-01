@@ -111,8 +111,10 @@ namespace Assets.Scripts.GeminiAI
             Debug.Log($"Gemini URL: {_options.Url}");
         }
 
-        private void OnDisable()
+        private async void OnDisable()
         {
+            await Disconnect();
+
             _httpClient?.Dispose();
             _webSocket?.Dispose();
 
@@ -173,7 +175,7 @@ namespace Assets.Scripts.GeminiAI
                 url += $"&sessionId={Guid.NewGuid()}";
             }
 
-            await _webSocket.ConnectAsync(new Uri(url), CancellationToken.None);
+            await _webSocket.ConnectAsync(new Uri(url), new CancellationTokenSource().Token);
 
             Task.Run(() => Receive());
 
@@ -203,12 +205,12 @@ namespace Assets.Scripts.GeminiAI
             {
                 var json = JsonConvert.SerializeObject(message, _serializerSettings);
 
-                //Debug.Log(json);
+                Debug.Log(json);
 
                 _hasSendRequest = true;
 
                 var buffer = new ArraySegment<byte>(System.Text.Encoding.UTF8.GetBytes(json));
-                await _webSocket.SendAsync(buffer, messageType, true, CancellationToken.None);
+                await _webSocket.SendAsync(buffer, messageType, true, new CancellationTokenSource().Token);
             }
             finally
             {
@@ -242,14 +244,24 @@ namespace Assets.Scripts.GeminiAI
 
                     do
                     {
-                        var result = await _webSocket.ReceiveAsync(responseBuffer, CancellationToken.None);
+                        var result = await _webSocket.ReceiveAsync(responseBuffer, new CancellationTokenSource().Token);
                         response += System.Text.Encoding.UTF8.GetString(responseBuffer.Array, 0, result.Count);
 
                         if (result.CloseStatus != null)
                             closeStatus = result.CloseStatus.Value;
 
+                        //Debug.Log(response);
+
                         closeStatusDescription = result.CloseStatusDescription;
                         messageType = result.MessageType;
+
+                        if (messageType.ToString() == "Closed" || messageType.ToString() == "Close")
+                        {
+                            continueReceiving = false;
+                            _onResponseReceived?.Invoke(response);
+                            break;
+                        }
+
 
                         continueGettingData = !result.EndOfMessage;
                     } while (continueGettingData);
@@ -293,6 +305,7 @@ namespace Assets.Scripts.GeminiAI
 
         private void OnResponseReceived(string onResponseReceived)
         {
+            Debug.Log(_webSocket.State);
             switch (_webSocket.State)
             {
                 case WebSocketState.Open:
@@ -300,9 +313,10 @@ namespace Assets.Scripts.GeminiAI
                     // First response is the connection confirmation
                     if (!_isConnected)
                         _onConnected?.Invoke(onResponseReceived);
-
-                    _onContentReceived?.Invoke(onResponseReceived);
+                    else
+                        _onContentReceived?.Invoke(onResponseReceived);
                     break;
+                case WebSocketState.CloseSent:
                 case WebSocketState.Closed:
                 case WebSocketState.CloseReceived:
                     _onCloseConnexion?.Invoke(onResponseReceived);
@@ -318,6 +332,7 @@ namespace Assets.Scripts.GeminiAI
         private void OnConnected(string response)
         {
             Debug.Log("WebSocket connection established.");
+            Debug.Log(response);
             _onConnected -= OnConnected;
             _onCloseConnexion += OnCloseConnexion;
 
