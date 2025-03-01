@@ -13,8 +13,4 @@ MonoBehaviour:
   m_Name: GeminiClient
   m_EditorClassIdentifier: 
   _options:
-    Model: models/gemini-2.0-flash-exp
-    Interaction: BidiGenerateContent
-    ApiKey: AIzaSyA6vwAqgPE3eqBK7l88I34EEvWKulpTjOc
-    HasSession: 0
     Url: wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent
