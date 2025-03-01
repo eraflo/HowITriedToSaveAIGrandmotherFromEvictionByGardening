@@ -77,3 +77,6 @@ crashlytics-build.properties
 
 # VS Code
 .vscode/
+
+# Add Assets/ScriptableObjects/Gemini to the ignore list
+/[Aa]ssets/[Ss]criptableObjects/[Gg]emini/
