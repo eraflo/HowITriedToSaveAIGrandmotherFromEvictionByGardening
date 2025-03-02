@@ -153,7 +153,7 @@ namespace Assets.Scripts.GeminiAI
 
         #region WebSocket Action
 
-        public async Task Connect(string model, bool hasSession)
+        public async Task Connect(string model, bool hasSession, string context = "")
         {
             if (_webSocket.State == WebSocketState.Open)
             {
@@ -185,6 +185,16 @@ namespace Assets.Scripts.GeminiAI
                 {
                     Model = model,
                     GenerationConfig = GenerationConfig == null ? null : GenerationConfig,
+                    SystemInstruction = new Content
+                    {
+                        Parts = new Part[]
+                        {
+                            new Part
+                            {
+                                Text = context
+                            }
+                        }
+                    },
                     Tools = _tool == null ? null : new Tool[] { _tool }
                 }
             };
@@ -192,9 +202,9 @@ namespace Assets.Scripts.GeminiAI
             Task.Run(() => Send(setup, WebSocketMessageType.Text));
         }
 
-        public async Task Connect(string model)
+        public async Task Connect(string model, string context = "")
         {
-            await Connect(model, _options.HasSession);
+            await Connect(model, _options.HasSession, context);
         }
 
         public async Task Send(SendMessage message, WebSocketMessageType messageType)
@@ -205,7 +215,7 @@ namespace Assets.Scripts.GeminiAI
             {
                 var json = JsonConvert.SerializeObject(message, _serializerSettings);
 
-                Debug.Log(json);
+                //Debug.Log(json);
 
                 _hasSendRequest = true;
 
@@ -254,6 +264,10 @@ namespace Assets.Scripts.GeminiAI
 
                         closeStatusDescription = result.CloseStatusDescription;
                         messageType = result.MessageType;
+
+                        //Debug.Log($"Message type: {messageType}");
+                        //Debug.Log($"Close status: {closeStatus}");
+                        //Debug.Log($"Close status description: {closeStatusDescription}");
 
                         if (messageType.ToString() == "Closed" || messageType.ToString() == "Close")
                         {
@@ -449,6 +463,17 @@ namespace Assets.Scripts.GeminiAI
             }
 
             _tool.FunctionDeclarations = ArrayUtils.Add(_tool.FunctionDeclarations, newFunctionCall);
+        }
+
+        public void DeclareNewFunction(FunctionDeclaration func)
+        {
+            if (_tool.FunctionDeclarations == null)
+            {
+                _tool.FunctionDeclarations = new FunctionDeclaration[] { func };
+                return;
+            }
+
+            _tool.FunctionDeclarations = ArrayUtils.Add(_tool.FunctionDeclarations, func);
         }
 
 

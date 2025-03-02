@@ -12,6 +12,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.XR;
+using System.Reflection;
+using System.Globalization;
 
 namespace Assets.Scripts.NPC
 {
@@ -19,15 +21,16 @@ namespace Assets.Scripts.NPC
     public class NPC : MonoBehaviour
     {
         [Header("Gemini Client")]
-        [SerializeField] private GeminiClient _geminiClient;
-        [SerializeField] private string model;
-        [SerializeField] private PrebuiltVoice _voice;
+        [SerializeField] protected GeminiClient _geminiClient;
+        [SerializeField] protected string model;
+        [SerializeField] protected PrebuiltVoice _voice;
+        [SerializeField, TextArea(1, 100000, order = 0)] private string _context;
 
-        private AudioRecorder _audioRecorder;
-        private AudioSpeaker _audioSpeaker;
+        protected AudioRecorder _audioRecorder;
+        protected AudioSpeaker _audioSpeaker;
 
-        private byte[] audioAnswer;
-        private bool hasAudioAnswer = false;
+        protected byte[] audioAnswer;
+        protected bool hasAudioAnswer = false;
 
         private Action OnComplete;
 
@@ -89,31 +92,46 @@ namespace Assets.Scripts.NPC
             };
 
 
-            _geminiClient.DeclareNewFunction(
-                name: "print_hello",
-                description: "Prints hello in console",
-                parameter: new Parameter()
-                {
-                    Type = SchemaType.OBJECT,
-                    Properties = new Dictionary<string, Property>()
-                    {
-                        {
-                            "name",
-                            new Property()
-                            {
-                                Type = SchemaType.STRING,
-                                Description = "Name of the person"
-                            }
-                        }
-                    }
-                }
-            );
+            DeclareFunctions();
+
+            //_geminiClient.DeclareNewFunction(
+            //    name: "print_hello",
+            //    description: "Prints hello in console",
+            //    parameter: new Parameter()
+            //    {
+            //        Type = SchemaType.OBJECT,
+            //        Properties = new Dictionary<string, Property>()
+            //        {
+            //            {
+            //                "name",
+            //                new Property()
+            //                {
+            //                    Type = SchemaType.STRING,
+            //                    Description = "Name of the person"
+            //                }
+            //            }
+            //        }
+            //    }
+            //);
 
 
             _geminiClient.ListenToContentReceived(OnResponseReceived);
             _geminiClient.ListenToConnected(OnConnected);
 
-            await _geminiClient.Connect(model);
+            await _geminiClient.Connect(model, _context);
+        }
+
+        protected virtual void DeclareFunctions() { }
+
+        protected FunctionDeclaration GetFunctionDeclaration(string methodName)
+        {
+            var method = GetType().GetMethod(methodName,
+                BindingFlags.Public |
+                BindingFlags.NonPublic |
+                BindingFlags.Instance |
+                BindingFlags.Static
+            );
+            return FunctionAnalyzer.GetFunctionDeclaration(method);
         }
 
         private void onTurnComplete()
@@ -123,7 +141,7 @@ namespace Assets.Scripts.NPC
                 UnityMainThreadDispatcher.Instance.Enqueue(() =>
                 {
                     var audioConverter = new AudioConverter();
-                    var audioClip = audioConverter.ConvertBytesToAudioClip(audioAnswer, 12000, 2);
+                    var audioClip = audioConverter.ConvertBytesToAudioClip(audioAnswer, 12000, 2); // 12000 = 24000 / 2 (rate from gemini)
                     _audioSpeaker.PlayAudioClip(audioClip);
 
                     audioAnswer = null;
@@ -177,7 +195,8 @@ namespace Assets.Scripts.NPC
         {
             var responseObj = _geminiClient.GetResponseObject<ReceiveMessage>(response);
 
-            if(responseObj.ServerContent.TurnComplete == true)
+            if (responseObj.ServerContent != null &&
+                responseObj.ServerContent.TurnComplete == true)
             {
                 OnComplete?.Invoke();
                 return;
@@ -188,43 +207,99 @@ namespace Assets.Scripts.NPC
                 responseObj.ServerContent.ModelTurn.Parts != null &&
                 responseObj.ServerContent.ModelTurn.Parts.Length > 0)
             {
-                foreach (var part in responseObj.ServerContent.ModelTurn.Parts)
+                ManageServerContent(responseObj);
+                return;
+            }
+
+            if (responseObj.ToolCall != null &&
+                responseObj.ToolCall.FunctionCalls != null &&
+                responseObj.ToolCall.FunctionCalls.Length > 0
+            )
+            {
+                ManageFunctionCall(responseObj);
+                return;
+            }
+                
+        }
+
+        private void ManageFunctionCall(ReceiveMessage responseObj)
+        {
+            foreach (var functionCall in responseObj.ToolCall.FunctionCalls)
+            {
+                // snake_case to TitleCase
+                TextInfo textInfo = new CultureInfo("en-US", false).TextInfo;
+                var functionName = textInfo.ToTitleCase(functionCall.Name.Replace("_", " "));
+                functionName = functionName.Replace(" ", "");
+
+                var method = GetType().GetMethod(functionName,
+                    BindingFlags.Public |
+                    BindingFlags.NonPublic |
+                    BindingFlags.Instance |
+                    BindingFlags.Static
+                );
+
+                if (method != null)
                 {
-                    if (part.Text != null)
+                    var functionDeclaration = FunctionAnalyzer.GetFunctionDeclaration(method);
+
+                    if (functionDeclaration != null)
                     {
-                        Debug.Log(part.Text);
-                    }
-                    else if(part.InlineData != null)
-                    {
-                        UnityMainThreadDispatcher.Instance.Enqueue(() =>
+                        var parametersDef = functionDeclaration.Parameters.Properties;
+
+                        var parameters = new object[parametersDef.Count];
+
+                        int index = 0;
+                        foreach (var parameter in parametersDef)
                         {
-                            var mimeTypeFull = part.InlineData.MimeType;
-                            var mimeType = mimeTypeFull.Split(';')[0];
+                            var value = functionCall.Args[parameter.Key];
+                            parameters[index] = value;
+                            index++;
+                        }
 
-                            switch (mimeType)
-                            {
-                                case MimeType.PCM:
-                                    hasAudioAnswer = true;
-
-                                    var audioConverter = new AudioConverter();
-                                    int rate = int.Parse(mimeTypeFull.Split(';')[1].Split('=')[1]);
-                                    var bytes = audioConverter.ConvertFrom64String(part.InlineData.Data);
-
-                                    if(audioAnswer == null)
-                                    {
-                                        audioAnswer = bytes;
-                                    }
-                                    else
-                                    {
-                                        var newBytes = new byte[audioAnswer.Length + bytes.Length];
-                                        audioAnswer.CopyTo(newBytes, 0);
-                                        bytes.CopyTo(newBytes, audioAnswer.Length);
-                                        audioAnswer = newBytes;
-                                    }
-                                    break;
-                            }
-                        });
+                        method?.Invoke(this, parameters);
                     }
+                }
+            }
+        }
+
+        private void ManageServerContent(ReceiveMessage responseObj)
+        {
+            foreach (var part in responseObj.ServerContent.ModelTurn.Parts)
+            {
+                if (part.Text != null)
+                {
+                    Debug.Log(part.Text);
+                }
+                else if (part.InlineData != null)
+                {
+                    UnityMainThreadDispatcher.Instance.Enqueue(() =>
+                    {
+                        var mimeTypeFull = part.InlineData.MimeType;
+                        var mimeType = mimeTypeFull.Split(';')[0];
+
+                        switch (mimeType)
+                        {
+                            case MimeType.PCM:
+                                hasAudioAnswer = true;
+
+                                var audioConverter = new AudioConverter();
+                                int rate = int.Parse(mimeTypeFull.Split(';')[1].Split('=')[1]);
+                                var bytes = audioConverter.ConvertFrom64String(part.InlineData.Data);
+
+                                if (audioAnswer == null)
+                                {
+                                    audioAnswer = bytes;
+                                }
+                                else
+                                {
+                                    var newBytes = new byte[audioAnswer.Length + bytes.Length];
+                                    audioAnswer.CopyTo(newBytes, 0);
+                                    bytes.CopyTo(newBytes, audioAnswer.Length);
+                                    audioAnswer = newBytes;
+                                }
+                                break;
+                        }
+                    });
                 }
             }
         }
