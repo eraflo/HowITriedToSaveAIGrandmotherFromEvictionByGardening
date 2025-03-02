@@ -1,7 +1,13 @@
+using UnityEngine;
 using Utils;
 
 public class GameManager : SingletonMonoBehaviour<GameManager>
 {
+    [SerializeField] private Transform player;
+    [SerializeField] private Transform canvasSpawnPoint;
+    [SerializeField] private Transform houseSpawnPoint;
+    [SerializeField] private Transform marketSpawnPoint;
+    
     public int Money { get; private set; }
 
     private void Update()
@@ -17,6 +23,17 @@ public class GameManager : SingletonMonoBehaviour<GameManager>
         }
 
         TimeOfDayManager.Instance.NextDay();
+    }
+
+    public void SetPlayerPosition(PlayerPosition pos)
+    {
+        player.position = pos switch
+        {
+            PlayerPosition.Canvas => canvasSpawnPoint.position,
+            PlayerPosition.House => houseSpawnPoint.position,
+            PlayerPosition.Market => marketSpawnPoint.position,
+            _ => player.position
+        };
     }
     
     public void GiveMoney(int amount)
@@ -34,4 +51,11 @@ public class GameManager : SingletonMonoBehaviour<GameManager>
         
         // TODO: game over logic
     }
+}
+
+public enum PlayerPosition
+{
+    Canvas,
+    House,
+    Market
 }
