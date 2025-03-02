@@ -45,6 +45,7 @@ GameObject:
   - component: {fileID: 2154007740946610975}
   - component: {fileID: 5550434672523754396}
   - component: {fileID: 4268343123197160445}
+  - component: {fileID: 1182712986187275186}
   m_Layer: 0
   m_Name: Scissors
   m_TagString: Untagged
@@ -318,3 +319,15 @@ MonoBehaviour:
   m_StartingSingleGrabTransformers: []
   m_StartingMultipleGrabTransformers: []
   m_AddDefaultGrabTransformers: 1
+--- !u!114 &1182712986187275186
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1767638506504354425}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 65d958d39c7ce484391db9bab9aab6a3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
