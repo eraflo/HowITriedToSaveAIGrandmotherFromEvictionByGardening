@@ -14,10 +14,11 @@ using UnityEngine;
 using UnityEngine.XR;
 using System.Reflection;
 using System.Globalization;
+using Assets.Scripts.NPC.Behaviour;
 
 namespace Assets.Scripts.NPC
 {
-    [RequireComponent(typeof(AudioRecorder), typeof(AudioSpeaker))]
+    [RequireComponent(typeof(AudioRecorder), typeof(AudioSpeaker), typeof(BehaviourTree))]
     public class NPC : MonoBehaviour
     {
         [Header("Gemini Client")]
@@ -31,6 +32,8 @@ namespace Assets.Scripts.NPC
 
         protected byte[] audioAnswer;
         protected bool hasAudioAnswer = false;
+
+        protected BehaviourTree _behaviourTree;
 
         private Action OnComplete;
 
@@ -47,6 +50,8 @@ namespace Assets.Scripts.NPC
             _audioRecorder.onGetAudioFlux += OnGetAudioFlux;
 
             _audioSpeaker = GetComponent<AudioSpeaker>();
+
+            _behaviourTree = GetComponent<BehaviourTree>();
 
             _geminiClient.ChangeConnexionType(ConnexionType.WebSocket, "BidiGenerateContent");
             _geminiClient.GenerationConfig.ResponseMimeType = MimeType.TEXT;
