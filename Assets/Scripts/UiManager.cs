@@ -16,8 +16,14 @@ public class UiManager : SingletonMonoBehaviour<UiManager>
     public void DoNextDayTransition()
     {
         TimeOfDayManager.Instance.Paused = true;
-        dayText.text = $"DAY {TimeOfDayManager.Instance.Day}";
+        dayText.text = $"DAY {TimeOfDayManager.Instance.Day}\n<size=20>100€ DUE BY DAY {NextDueDay()}</size>";
         StartCoroutine(NextDayTransition());
+    }
+
+    private int NextDueDay()
+    {
+        var day = TimeOfDayManager.Instance.Day;
+        return day + (7 - day % 7);
     }
 
     private IEnumerator NextDayTransition()
