@@ -64,6 +64,12 @@ public class TimeOfDayManager : SingletonMonoBehaviour<TimeOfDayManager>
         UiManager.Instance.DoNextDayTransition();
     }
 
+    public void SkipDay()
+    {
+        Reset();
+        NextDay();
+    }
+
     private void UpdateSunRotation()
     {
         var timeInDay = Hour + Minute / 60f;
