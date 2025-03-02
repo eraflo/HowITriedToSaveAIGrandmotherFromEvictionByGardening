@@ -11,9 +11,16 @@ namespace Plant
         public GameObject[] sproutStages;
         
         public XRGrabInteractable grownPlant;
-        
-        public int growthTime;
 
-        public int sellValue;
+        public GameObject weed;
+        
+        public GrowType growType;
+        
+
+        [Header("Use this one if Grow Type is set to Time")]
+        public int growthTimeSeconds;
+
+        [Header("Use this one if Grow Type is set to Day")]
+        public int growthTimeDays;
     }
 }

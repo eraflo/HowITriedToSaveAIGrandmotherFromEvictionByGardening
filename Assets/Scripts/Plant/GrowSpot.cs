@@ -12,10 +12,14 @@ namespace Plant
         
         private bool _isDigged;
         private bool _isWatered;
+        private bool _isDead;
+        private bool _weedsTrimmed = true;
         private GameObject _currentPlant;
+        private GameObject _weed;
         private int _currentStage;
         private bool _fullyGrown;
         private float _time;
+        private int _previousDay;
 
         private void Update()
         {
@@ -29,18 +33,45 @@ namespace Plant
                 return;
             }
 
+            if (_isDead)
+            {
+                return;
+            }
+
             if (!_isWatered)
             {
                 // TODO: dead plant
                 return;
             }
 
-            _time += Time.deltaTime;
-            
-            if (_time >= plant.growthTime)
+            if (plant.growType == GrowType.Time)
             {
-                Grow();
-                _time = 0;
+                _time += Time.deltaTime;
+                
+                if (_time >= plant.growthTimeSeconds)
+                {
+                    Grow();
+                    _time = 0;
+                }
+            }
+            else
+            {
+                if (_previousDay == TimeOfDayManager.Instance.Day)
+                {
+                    return;
+                }
+                
+                _previousDay = TimeOfDayManager.Instance.Day;
+
+                if (_weedsTrimmed)
+                {
+                    Grow();
+                    TryGrowWeed();
+                }
+                else
+                {
+                    Die();
+                }
             }
         }
 
@@ -65,6 +96,12 @@ namespace Plant
             if (other.gameObject.name == "Watering Can")
             {
                 Water();
+                return;
+            }
+            
+            if (other.gameObject.name == "Scissors")
+            {
+                TrimWeeds();
                 return;
             }
         }
@@ -125,16 +162,57 @@ namespace Plant
             }
         }
 
+        private void TryGrowWeed()
+        {
+            if (!_weedsTrimmed)
+            {
+                return;
+            }
+            
+            _weedsTrimmed = Random.Range(0, 100) > 25;
+            if (_weedsTrimmed)
+            {
+                return;
+            }
+            
+            _weed = Instantiate(plant.weed.gameObject, transform);
+        }
+
+        private void Die()
+        {
+            if (_isDead)
+            {
+                return;
+            }
+            
+            _isDead = true;
+            // TODO: model
+        }
+
         private void Harvest(SelectExitEventArgs args)
         {
             Destroy(_currentPlant);
+            Destroy(_weed);
             plant = null;
             _isDigged = false;
             _isWatered = false;
+            _isDead = false;
+            _weedsTrimmed = true;
             _currentStage = 0;
             _fullyGrown = false;
             _time = 0;
             // TODO: add to inventory
+        }
+
+        private void TrimWeeds()
+        {
+            if (_weedsTrimmed)
+            {
+                return;
+            }
+
+            Destroy(_weed);
+            _weedsTrimmed = true;
         }
 
         private void SetDirtPile(GameObject newDirt)

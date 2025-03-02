@@ -18,5 +18,8 @@ MonoBehaviour:
   - {fileID: 919132149155446097, guid: 54f6a454d309d9e418a1bc300e965bda, type: 3}
   grownPlant: {fileID: 1161256109565214490, guid: 7dd386cd6debd0a4bb7c81ebb02c9cb8,
     type: 3}
-  growthTime: 5
   sellValue: 5
+  weed: {fileID: 919132149155446097, guid: 6d5983b0d8100f04b9445b067dc2ccce, type: 3}
+  growType: 1
+  growthTimeSeconds: 0
+  growthTimeDays: 1
