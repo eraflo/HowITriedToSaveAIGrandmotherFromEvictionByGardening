@@ -35,6 +35,14 @@ public class GameManager : SingletonMonoBehaviour<GameManager>
             _ => player.position
         };
     }
+
+    public void SwitchArea()
+    {
+        var distanceToHouse = Vector3.Distance(player.position, houseSpawnPoint.position);
+        var distanceToMarket = Vector3.Distance(player.position, marketSpawnPoint.position);
+
+        SetPlayerPosition(distanceToHouse < distanceToMarket ? PlayerPosition.Market : PlayerPosition.House);
+    }
     
     public void GiveMoney(int amount)
     {
