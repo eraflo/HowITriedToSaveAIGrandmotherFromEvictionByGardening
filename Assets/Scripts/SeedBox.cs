@@ -1,9 +1,5 @@
-using System.Collections;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using UnityEngine.XR.Interaction.Toolkit;
-using Utils;
 
 public class SeedBox : MonoBehaviour
 {
@@ -11,8 +7,6 @@ public class SeedBox : MonoBehaviour
     public string seedType;
 
     public Canvas canvas;
-
-    public UnityEngine.UI.Button buyButton;
 
     public TextMeshProUGUI buyTitle;
 
@@ -24,30 +18,18 @@ public class SeedBox : MonoBehaviour
 
     public Transform camTransform;
 
-    public bool hasBeenBought;
-
-    private Vector3 startingPos;
-
-    private BoxCollider col;
-
-    private Rigidbody rb;
-
     public TextMeshProUGUI yourMoneyText;
+
+    public GameObject seedPrefab;
 
    
     
     // Start is called before the first frame update
     void Start()
     {   
-        startingPos = transform.position;
         canvas.enabled = false;
         
         gm = GameManager.Instance;
-        col = GetComponent<BoxCollider>();
-        rb = GetComponent<Rigidbody>();
-
-        col.enabled = false;
-        rb.isKinematic = true;
       
         if (seedType != null)
         {
@@ -75,17 +57,6 @@ public class SeedBox : MonoBehaviour
         {
             ToggleCanvasVisible(false);
         }
-
-        if (hasBeenBought)
-        {
-            canvas.enabled = false;
-            col.enabled = true;
-            rb.isKinematic = false;
-        }
-        else
-        {
-           transform.position = startingPos;
-        }
         
     }
 
@@ -94,7 +65,7 @@ public class SeedBox : MonoBehaviour
         if (gm.Money >= seedCost)
         {
             gm.TakeMoney(seedCost);
-            hasBeenBought = true;
+            Instantiate(seedPrefab, new Vector3(transform.position.x, transform.position.y + 1, transform.position.z), Quaternion.identity);
         }
         
     }
