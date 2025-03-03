@@ -191,7 +191,6 @@ namespace Plant
 
         private void Harvest(SelectExitEventArgs args)
         {
-            Destroy(_currentPlant);
             Destroy(_weed);
             plant = null;
             _isDigged = false;
@@ -201,7 +200,6 @@ namespace Plant
             _currentStage = 0;
             _fullyGrown = false;
             _time = 0;
-            // TODO: add to inventory
         }
 
         private void TrimWeeds()
