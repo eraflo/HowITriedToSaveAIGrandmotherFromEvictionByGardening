@@ -62,6 +62,8 @@ namespace Plant
                 }
                 
                 _previousDay = TimeOfDayManager.Instance.Day;
+                _isWatered = false;
+                Debug.Log("Progressing plant growth");
 
                 if (_weedsTrimmed)
                 {
@@ -130,6 +132,7 @@ namespace Plant
             }
             
             plant = plantObject;
+            _previousDay = TimeOfDayManager.Instance.Day;
             SetPlant(plant.sproutStages[0]);
             
             SetDirtPile(plantOptions.dirtPileFilled);
@@ -153,6 +156,7 @@ namespace Plant
             if (_currentStage < plant.sproutStages.Length)
             {
                 SetPlant(plant.sproutStages[_currentStage]);
+                Debug.Log("Plant grew");
             }
             else
             {
@@ -160,6 +164,7 @@ namespace Plant
                 _currentPlant.GetComponent<XRGrabInteractable>().selectExited.AddListener(Harvest);
                 _currentPlant.GetComponent<FullyGrown>().plant = plant;
                 _fullyGrown = true;
+                Debug.Log("Plant fully grown");
             }
         }
 
@@ -177,6 +182,9 @@ namespace Plant
             }
             
             _weed = Instantiate(plant.weed.gameObject, transform);
+            _weed.transform.localPosition += new Vector3(0, 0.2f, 0);
+            
+            Debug.Log("Weed grown");
         }
 
         private void Die()
@@ -188,6 +196,8 @@ namespace Plant
             
             _isDead = true;
             // TODO: model
+            
+            Debug.Log("Plant died");
         }
 
         private void Harvest(SelectExitEventArgs args)
@@ -229,7 +239,7 @@ namespace Plant
             }
             
             _currentPlant = Instantiate(newPlant, transform);
-            _currentPlant.transform.localPosition -= new Vector3(0, 0.2f, 0);
+            _currentPlant.transform.localPosition += new Vector3(0, 0.1f, 0);
         }
     }
 }
