@@ -1,5 +1,9 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Assets/Editor Default Resources/EditorAudioUtils/EditorNotificationSettings.asset.meta
+guid: c4757abb08a3c424695a513a8ea42b00
+========
 guid: db276cb21a20ec34c8ec5afce7654cad
+>>>>>>>> main:Assets/ScriptableObjects/Plant/GlobalPlantOptions.asset.meta
 NativeFormatImporter:
   externalObjects: {}
   mainObjectFileID: 11400000

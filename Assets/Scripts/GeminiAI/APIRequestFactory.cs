@@ -1,5 +1,6 @@
+using Assets.Scripts.GeminiAI.Enums;
 using Assets.Scripts.GeminiAI.Request;
-using Assets.Scripts.GeminiAI.Request.RequestParts;
+using Assets.Scripts.GeminiAI.Parts;
 using Assets.Scripts.Utils;
 using System.Collections.Generic;
 
@@ -11,49 +12,49 @@ namespace Assets.Scripts.GeminiAI
         {
             return new AIRequest
             {
-                Contents = new RequestContent[]
+                Contents = new Content[]
                 {
-                    new RequestContent
+                    new Content
                     {
-                        Role = "user",
-                        Parts = new RequestPart[]
+                        Role = Role.User,
+                        Parts = new Part[]
                         {
-                            new TextPart
+                            new Part
                             {
                                 Text = prompt
                             }
                         }
                     }
                 },
-                GenerationConfig = new AIGenerationConfig
+                GenerationConfig = new GenerationConfig
                 {
                     MaxOutputTokens = 2048,
                     Temperature = 1,
                     TopP = 1,
                     TopK = 1,
-                    StopSequences = new List<object>()
+                    StopSequences = new string[] {  }
                 },
                 SafetySettings = new SafetySettings[]
                 {
                     new SafetySettings
                     {
-                        Category = "HARM_CATEGORY_HARASSMENT",
-                        Threshold = EnumUtils.GetEnumFieldToString(SafetyThreshold.BLOCK_ONLY_HIGH)
+                        Category = HarmCategory.HARM_CATEGORY_HARASSMENT,
+                        Threshold = HarmThreshold.BLOCK_ONLY_HIGH
                     },
                     new SafetySettings
                     {
-                        Category = "HARM_CATEGORY_HATE_SPEECH",
-                        Threshold = EnumUtils.GetEnumFieldToString(SafetyThreshold.BLOCK_ONLY_HIGH)
+                        Category = HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                        Threshold = HarmThreshold.BLOCK_ONLY_HIGH
                     },
                     new SafetySettings
                     {
-                        Category = "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                        Threshold = EnumUtils.GetEnumFieldToString(SafetyThreshold.BLOCK_ONLY_HIGH)
+                        Category = HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+                        Threshold = HarmThreshold.BLOCK_ONLY_HIGH
                     },
                     new SafetySettings
                     {
-                        Category = "HARM_CATEGORY_DANGEROUS_CONTENT",
-                        Threshold = EnumUtils.GetEnumFieldToString(SafetyThreshold.BLOCK_ONLY_HIGH)
+                        Category = HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                        Threshold = HarmThreshold.BLOCK_ONLY_HIGH
                     }
                 }
             };
@@ -61,21 +62,21 @@ namespace Assets.Scripts.GeminiAI
 
         public static AIRequest CreateRequest(
             string prompt, 
-            RequestPart[] parts = null,
+            Part[] parts = null,
             string model = null,
-            AIGenerationConfig generationConfig = null,
+            GenerationConfig generationConfig = null,
             SafetySettings[] safetySettings = null
         ) {
             return new AIRequest
             {
-                Contents = new RequestContent[]
+                Contents = new Content[]
                 {
-                    new RequestContent
+                    new Content
                     {
-                        Role = "user",
-                        Parts = new RequestPart[]
+                        Role = Role.User,
+                        Parts = new Part[]
                         {
-                            new TextPart
+                            new Part
                             {
                                 Text = prompt
                             }
