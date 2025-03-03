@@ -22,7 +22,8 @@ public class UiManager : SingletonMonoBehaviour<UiManager>
         {
             if (!GameManager.Instance.TakeRent())
             {
-                dayText.text = "BANKRUPT\n<size=20>GRANDMA NOW LIVES ON THE STREET :(</size>";
+                dayText.text = "<size=50>BANKRUPT</size>\n<size=12>GRANDMA NOW LIVES ON THE STREET :(</size>";
+                GameManager.Instance.SetPlayerPosition(PlayerPosition.Canvas);
                 StartCoroutine(FadeIn(nextDayOverlay, 2f));
                 return;
             }
