@@ -45,6 +45,7 @@ GameObject:
   - component: {fileID: 741735559050163446}
   - component: {fileID: 142584591823880207}
   - component: {fileID: 1866516197176555289}
+  - component: {fileID: 8169980615631028672}
   m_Layer: 0
   m_Name: Trowel
   m_TagString: Untagged
@@ -318,3 +319,15 @@ MonoBehaviour:
   m_StartingSingleGrabTransformers: []
   m_StartingMultipleGrabTransformers: []
   m_AddDefaultGrabTransformers: 1
+--- !u!114 &8169980615631028672
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8767028897232302285}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 65d958d39c7ce484391db9bab9aab6a3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
