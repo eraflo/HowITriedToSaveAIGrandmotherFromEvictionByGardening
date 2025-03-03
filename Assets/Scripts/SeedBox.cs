@@ -57,7 +57,7 @@ public class SeedBox : MonoBehaviour
         {
             buyTitle.text = "Seeds for sale";
         }
-        buyText.text = "Buy for " + seedCost + "€";
+        buyText.text = "Buy for " + seedCost + "â‚¬";
         
     }
 
@@ -65,7 +65,7 @@ public class SeedBox : MonoBehaviour
     void Update()
     {
 
-        yourMoneyText.text = "Bank account: " + gm.Money.ToString() + "€";
+        yourMoneyText.text = "Bank account: " + gm.Money.ToString() + "â‚¬";
 
         if (CheckCameraDistanceFromBox() <= 3f)
         {

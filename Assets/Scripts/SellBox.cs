@@ -47,7 +47,7 @@ public class SellBox : MonoBehaviour
 
     public void UpdateText()
     {
-        sellValueText.text = "Sell for (+" + CalculateSellValue().ToString() + "�)";
+        sellValueText.text = "Sell for (+" + CalculateSellValue().ToString() + "€)";
     }
 
     public void SellPlants()
@@ -60,7 +60,7 @@ public class SellBox : MonoBehaviour
         }
         colliderBox.ResetPlants();
         gm.GiveMoney(moneyGained);
-        yourMoneyText.text = "Bank account: " + gm.Money.ToString() + "�";
+        yourMoneyText.text = "Bank account: " + gm.Money.ToString() + "€";
         UpdateText();
     }
 
