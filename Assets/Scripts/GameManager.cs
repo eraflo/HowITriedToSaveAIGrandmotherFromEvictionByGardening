@@ -49,15 +49,22 @@ public class GameManager : SingletonMonoBehaviour<GameManager>
         Money += amount;
     }
     
-    public void TakeMoney(int amount, bool landlord = false)
+    public void TakeMoney(int amount)
     {
         Money -= amount;
-        if (Money > 0 && landlord)
+    }
+
+    public bool TakeRent()
+    {
+        const int rent = 100;
+        
+        if (Money < rent)
         {
-            return;
+            return false;
         }
         
-        // TODO: game over logic
+        TakeMoney(rent);
+        return true;
     }
 }
 

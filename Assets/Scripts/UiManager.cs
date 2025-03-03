@@ -17,8 +17,25 @@ public class UiManager : SingletonMonoBehaviour<UiManager>
     public void DoNextDayTransition()
     {
         TimeOfDayManager.Instance.Paused = true;
+
+        if (IsDueDay())
+        {
+            if (!GameManager.Instance.TakeRent())
+            {
+                dayText.text = "BANKRUPT\n<size=20>GRANDMA NOW LIVES ON THE STREET :(</size>";
+                StartCoroutine(FadeIn(nextDayOverlay, 2f));
+                return;
+            }
+        }
+        
         dayText.text = $"DAY {TimeOfDayManager.Instance.Day}\n<size=20>100€ DUE BY DAY {NextDueDay()}</size>";
         StartCoroutine(NextDayTransition());
+    }
+    
+    private bool IsDueDay()
+    {
+        var day = TimeOfDayManager.Instance.Day;
+        return day % 7 == 0;
     }
 
     private int NextDueDay()
