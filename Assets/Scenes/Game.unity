@@ -3969,7 +3969,7 @@ MonoBehaviour:
     has the following tools: Throwel, watering can, seeds. Do not break the fourth
     wall unless the player explicitly needs help. Do not respond with roleplay expressions.
 
-    
+
 
     Plant
     lifecycle:
@@ -3986,42 +3986,41 @@ MonoBehaviour:
     ->
     Watered covered dirt hole (wait for next day)
 
-    
+
 
     Day 2
 
-    -> Dry
-    Covered dirt hole with small sprout (water or it dies)
+    -> Dry Covered
+    dirt hole with small sprout (water or it dies)
 
-    -> Watered Covered
-    dirt hole with small sprout (wait for next day)
+    -> Watered Covered dirt hole
+    with small sprout (wait for next day)
 
-    
+
 
     Day 3
 
-    -> Dry
-    Covered dirt hole with sprout (water or it dies)
+    -> Dry Covered dirt hole
+    with sprout (water or it dies)
 
-    -> Watered Covered dirt
-    hole with sprout (wait for next day)
+    -> Watered Covered dirt hole with sprout
+    (wait for next day)
 
-    
+
 
     Day 4
 
-    -> Dry Covered
-    dirt hole whit turnip (Pick the turnip up with hand, sell at store for money)
+    -> Dry Covered dirt hole whit turnip (Pick
+    the turnip up with hand, sell at store for money)
 
-    ->
-    Dirt plot
+    -> Dirt plot
 
     -> Repeat
 
-    
 
-    If plant dies (use throwel to remove dead
-    plant)
+
+    If
+    plant dies (use throwel to remove dead plant)
 
     -> Revers back to Dirt Plot'
   _toolCabinet: {fileID: 1944860249}
@@ -7525,6 +7524,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 1870136027}
+    - targetCorrespondingSourceObject: {fileID: 6989746490236600462, guid: 92c4c07e013bb8d40b1807d1ebe11dab,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1870136031}
   m_SourcePrefab: {fileID: 100100000, guid: 92c4c07e013bb8d40b1807d1ebe11dab, type: 3}
 --- !u!4 &1870136025 stripped
 Transform:
@@ -7664,6 +7667,27 @@ MonoBehaviour:
   m_OnDeactivate:
     m_PersistentCalls:
       m_Calls: []
+--- !u!65 &1870136031
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1870136026}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 32.7975, y: 57.674366, z: 3.006655}
+  m_Center: {x: -16.398746, y: 0.0000019073484, z: 5.826007e-14}
 --- !u!1 &1939375537
 GameObject:
   m_ObjectHideFlags: 0
@@ -7862,6 +7886,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 1973429621}
+    - targetCorrespondingSourceObject: {fileID: 574204984215433305, guid: 44401965962981042a11ba846221e1fd,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1973429625}
   m_SourcePrefab: {fileID: 100100000, guid: 44401965962981042a11ba846221e1fd, type: 3}
 --- !u!4 &1973429619 stripped
 Transform:
@@ -7925,6 +7953,18 @@ MonoBehaviour:
       m_Calls: []
   m_HoverEntered:
     m_PersistentCalls:
+      m_Calls: []
+  m_HoverExited:
+    m_PersistentCalls:
+      m_Calls: []
+  m_FirstSelectEntered:
+    m_PersistentCalls:
+      m_Calls: []
+  m_LastSelectExited:
+    m_PersistentCalls:
+      m_Calls: []
+  m_SelectEntered:
+    m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 1973429621}
         m_TargetAssemblyTypeName: MarketTeleporter, Scripts
@@ -7938,18 +7978,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-  m_HoverExited:
-    m_PersistentCalls:
-      m_Calls: []
-  m_FirstSelectEntered:
-    m_PersistentCalls:
-      m_Calls: []
-  m_LastSelectExited:
-    m_PersistentCalls:
-      m_Calls: []
-  m_SelectEntered:
-    m_PersistentCalls:
-      m_Calls: []
   m_SelectExited:
     m_PersistentCalls:
       m_Calls: []
@@ -8001,6 +8029,27 @@ MonoBehaviour:
   m_OnDeactivate:
     m_PersistentCalls:
       m_Calls: []
+--- !u!65 &1973429625
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1973429620}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.5262603, y: 10.755866, z: 10.571792}
+  m_Center: {x: 0.0000038146961, y: 2.7599921, z: 1.3793248}
 --- !u!1 &1977839064
 GameObject:
   m_ObjectHideFlags: 0
@@ -9459,3 +9508,4 @@ SceneRoots:
   - {fileID: 155948932}
   - {fileID: 1944860249}
   - {fileID: 1056105728}
+  - {fileID: 1471377604}

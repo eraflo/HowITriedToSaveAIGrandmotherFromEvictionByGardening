@@ -29,7 +29,8 @@ public class UiManager : SingletonMonoBehaviour<UiManager>
 
     private IEnumerator InitialTransition()
     {
-        yield return FadeOut(nextDayOverlay, 5f);
+        yield return new WaitForSeconds(5f);
+        yield return FadeOut(nextDayOverlay, 2f);
         GameManager.Instance.SetPlayerPosition(PlayerPosition.House);
     }
 
@@ -40,7 +41,7 @@ public class UiManager : SingletonMonoBehaviour<UiManager>
         yield return new WaitForSeconds(2f);
         TimeOfDayManager.Instance.Reset();
         yield return FadeOut(nextDayOverlay, 2f);
-        GameManager.Instance.SetPlayerPosition(PlayerPosition.Market);
+        GameManager.Instance.SetPlayerPosition(PlayerPosition.House);
     }
 
     private IEnumerator FadeIn(CanvasGroup canvas, float duration)
