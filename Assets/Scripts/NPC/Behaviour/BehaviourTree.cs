@@ -34,6 +34,11 @@ namespace Assets.Scripts.NPC.Behaviour
             }
         }
 
+        public Node GetTree()
+        {
+            return root;
+        }
+
         void Update()
         {
             if (root != null)

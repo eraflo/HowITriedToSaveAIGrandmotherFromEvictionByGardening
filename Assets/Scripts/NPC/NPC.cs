@@ -15,6 +15,7 @@ using UnityEngine.XR;
 using System.Reflection;
 using System.Globalization;
 using Assets.Scripts.NPC.Behaviour;
+using System.Threading;
 
 namespace Assets.Scripts.NPC
 {
@@ -27,6 +28,8 @@ namespace Assets.Scripts.NPC
         [SerializeField] protected PrebuiltVoice _voice;
         [SerializeField, TextArea(1, 100000, order = 0)] private string _context;
 
+        protected ToolArea _toolArea;
+
         protected AudioRecorder _audioRecorder;
         protected AudioSpeaker _audioSpeaker;
 
@@ -34,6 +37,8 @@ namespace Assets.Scripts.NPC
         protected bool hasAudioAnswer = false;
 
         protected BehaviourTree _behaviourTree;
+
+        private Dictionary<string, CancellationTokenSource> _taskRunning = new Dictionary<string, CancellationTokenSource>();
 
         private Action OnComplete;
 
@@ -126,6 +131,11 @@ namespace Assets.Scripts.NPC
             await _geminiClient.Connect(model, _context);
         }
 
+        private async void OnDestroy()
+        {
+            await _geminiClient.Disconnect();
+        }
+
         protected virtual void DeclareFunctions() { }
 
         protected FunctionDeclaration GetFunctionDeclaration(string methodName)
@@ -137,6 +147,16 @@ namespace Assets.Scripts.NPC
                 BindingFlags.Static
             );
             return FunctionAnalyzer.GetFunctionDeclaration(method);
+        }
+
+        public void EnterToolArea(ToolArea area)
+        {
+            _toolArea = area;
+        }
+
+        public void ExitToolArea() 
+        {
+            _toolArea = null;
         }
 
         private void onTurnComplete()
@@ -224,7 +244,26 @@ namespace Assets.Scripts.NPC
                 ManageFunctionCall(responseObj);
                 return;
             }
-                
+
+            if(responseObj.ToolCallCancellation != null)
+            {
+                ManageFunctionCallCancelled(responseObj);
+                return;
+            }
+
+        }
+
+        private void ManageFunctionCallCancelled(ReceiveMessage responseObj)
+        {
+            for (int i = responseObj.ToolCallCancellation.Ids.Length - 1; i >= 0; i--)
+            {
+                var functionId = responseObj.ToolCallCancellation.Ids[i];
+                if (_taskRunning.ContainsKey(functionId))
+                {
+                    _taskRunning[functionId].Cancel();
+                    _taskRunning.Remove(functionId);
+                }
+            }
         }
 
         private void ManageFunctionCall(ReceiveMessage responseObj)
@@ -261,7 +300,15 @@ namespace Assets.Scripts.NPC
                             index++;
                         }
 
-                        method?.Invoke(this, parameters);
+                        var CancellationTokenSource = new CancellationTokenSource();
+
+                        _taskRunning.Add(functionCall.Id, CancellationTokenSource);
+
+                        Task.Run(() =>
+                        {
+                            method?.Invoke(this, parameters);
+                            _taskRunning.Remove(functionCall.Id);
+                        }, CancellationTokenSource.Token);
                     }
                 }
             }
