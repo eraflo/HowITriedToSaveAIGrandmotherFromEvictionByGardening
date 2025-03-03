@@ -217,7 +217,7 @@ namespace Plant
         {
             Destroy(dirtHolder);
             dirtHolder = Instantiate(newDirt, transform);
-            dirtHolder.transform.localScale = new Vector3(40f, 40f, 40f);
+            //dirtHolder.transform.localScale = new Vector3(40f, 40f, 40f);
         }
 
         private void SetPlant(GameObject newPlant)
