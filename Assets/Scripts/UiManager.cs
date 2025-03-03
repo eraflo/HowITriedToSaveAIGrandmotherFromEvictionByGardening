@@ -28,7 +28,7 @@ public class UiManager : SingletonMonoBehaviour<UiManager>
             }
         }
         
-        dayText.text = $"DAY {TimeOfDayManager.Instance.Day}\n<size=20>100€ DUE BY DAY {NextDueDay()}</size>";
+        dayText.text = $"DAY {TimeOfDayManager.Instance.Day}\n<size=20>100€ DUE BY DAY {NextDueDay()}</size>\n<size=20>BALANCE: {GameManager.Instance.Money}€</size>";
         StartCoroutine(NextDayTransition());
     }
     
