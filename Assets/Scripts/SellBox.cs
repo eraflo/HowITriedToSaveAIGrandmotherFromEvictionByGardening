@@ -39,7 +39,7 @@ public class SellBox : MonoBehaviour
         var currentPlants = colliderBox.sellablePlants;
         foreach (var plant in currentPlants)
         {
-            int addValue = plant.GetComponent<Seed>().plant.sellValue;
+            int addValue = plant.GetComponent<FullyGrown>().plant.sellValue;
             currentSellValue += addValue;
         }
         return currentSellValue;
@@ -47,7 +47,7 @@ public class SellBox : MonoBehaviour
 
     public void UpdateText()
     {
-        sellValueText.text = "Sell for (+" + CalculateSellValue().ToString() + "€)";
+        sellValueText.text = "Sell for (+" + CalculateSellValue().ToString() + "ï¿½)";
     }
 
     public void SellPlants()
@@ -60,7 +60,7 @@ public class SellBox : MonoBehaviour
         }
         colliderBox.ResetPlants();
         gm.GiveMoney(moneyGained);
-        yourMoneyText.text = "Bank account: " + gm.Money.ToString() + "€";
+        yourMoneyText.text = "Bank account: " + gm.Money.ToString() + "ï¿½";
         UpdateText();
     }
 

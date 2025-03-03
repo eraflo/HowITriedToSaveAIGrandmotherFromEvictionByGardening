@@ -158,6 +158,7 @@ namespace Plant
             {
                 SetPlant(plant.grownPlant.gameObject);
                 _currentPlant.GetComponent<XRGrabInteractable>().selectExited.AddListener(Harvest);
+                _currentPlant.GetComponent<FullyGrown>().plant = plant;
                 _fullyGrown = true;
             }
         }
