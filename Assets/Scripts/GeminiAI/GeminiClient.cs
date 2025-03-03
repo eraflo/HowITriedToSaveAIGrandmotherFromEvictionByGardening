@@ -14,6 +14,7 @@ using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Android;
 
 namespace Assets.Scripts.GeminiAI
 {
@@ -90,6 +91,7 @@ namespace Assets.Scripts.GeminiAI
 
         private void OnEnable()
         {
+
             // Http client for simple API requests like generating text content
             if (_httpClient == null)
             {

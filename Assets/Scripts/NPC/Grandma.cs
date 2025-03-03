@@ -32,7 +32,8 @@ namespace Assets.Scripts.NPC
         private string toolToFetch;
         private bool lookAtTarget = false;
 
-        private XRGrabInteractable _grabbedTool;
+        private IXRSelectInteractable _grabbedTool;
+        private XRInteractionManager _interactionManager;
 
         protected sealed override void DeclareFunctions()
         {
@@ -41,6 +42,9 @@ namespace Assets.Scripts.NPC
 
         private void Start()
         {
+
+            _interactionManager = FindObjectOfType<XRInteractionManager>();
+
             Selector root = new Selector();
 
             Sequence idleSequence = new Sequence();
@@ -97,16 +101,16 @@ namespace Assets.Scripts.NPC
             {
                 agent.SetDestination(_toolCabinet.position);
 
-                if(!lookAtTarget)
-                {
-                    transform.LookAt(_toolCabinet.position);
-                    lookAtTarget = true;
-                }
-
                 if (_toolArea != null)
                 {
                     lookAtTarget = false;
                     return NodeState.SUCCESS;
+                }
+
+                if (!lookAtTarget)
+                {
+                    transform.LookAt(_toolCabinet.position);
+                    lookAtTarget = true;
                 }
 
                 return NodeState.RUNNING;
@@ -120,10 +124,15 @@ namespace Assets.Scripts.NPC
             _grabbedTool = _toolArea.GrabTool(toolToFetch);
             if (_grabbedTool != null)
             {
-                _grabbedTool.transform.SetParent(_grabPoint);
-                _grabbedTool.transform.localPosition = Vector3.zero;
-                _grabbedTool.transform.localRotation = Quaternion.identity;
-                _grabbedTool.GetComponent<Rigidbody>().useGravity = false;
+
+                var _grabbedToolObject = _grabbedTool as MonoBehaviour;
+                if (_grabbedToolObject != null)
+                {
+                    _grabbedToolObject.transform.SetParent(_grabPoint);
+                    _grabbedToolObject.transform.localPosition = Vector3.zero;
+                    _grabbedToolObject.transform.localRotation = Quaternion.identity;
+                    _grabbedToolObject.GetComponent<Rigidbody>().useGravity = false;
+                }
 
                 gotTool = true;
                 fetchTool = false;
@@ -141,19 +150,18 @@ namespace Assets.Scripts.NPC
             {
                 agent.SetDestination(_player.position);
 
-                if(!lookAtTarget)
+
+                if (agent.remainingDistance <= agent.stoppingDistance)
+                {
+                    lookAtTarget = false;
+                    return NodeState.SUCCESS;
+                }
+
+
+                if (!lookAtTarget)
                 {
                     transform.LookAt(_player.position);
                     lookAtTarget = true;
-                }
-
-                Debug.Log(agent.remainingDistance);
-
-                if (agent.remainingDistance <= 0.1f)
-                {
-                    Debug.Log("Arrived at player");
-                    lookAtTarget = false;
-                    return NodeState.SUCCESS;
                 }
 
                 return NodeState.RUNNING;
@@ -166,14 +174,17 @@ namespace Assets.Scripts.NPC
 
         private NodeState GiveToolToPlayer()
         {
-            Debug.Log("GiveToolToPlayer");
-            XRRayInteractor ray = _playerRightHand.GetComponent<XRRayInteractor>();
-            Debug.Log(ray);
+            IXRSelectInteractor ray = _playerRightHand.GetComponent<XRRayInteractor>();
             if (ray != null)
             {
-                _grabbedTool.transform.SetParent(_playerRightHand);
-                _grabbedTool.transform.localPosition = Vector3.zero;
-                _grabbedTool.transform.localRotation = Quaternion.identity;
+                var _grabbedToolObject = _grabbedTool as MonoBehaviour;
+                if (_grabbedToolObject != null)
+                {
+                    _grabbedToolObject.transform.SetParent(null);
+                    _grabbedToolObject.GetComponent<Rigidbody>().useGravity = true;
+                }
+
+                _interactionManager.SelectEnter(ray, _grabbedTool);
 
                 gotTool = false;
 

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Android;
 
 namespace Assets.Scripts.Audio
 {
@@ -15,6 +16,10 @@ namespace Assets.Scripts.Audio
         private void Awake()
         {
             _audioSource = GetComponent<AudioSource>();
+
+#if PLATFORM_ANDROID
+            Permission.RequestUserPermission(Permission.Microphone);
+#endif
         }
 
         public void PlayAudioClip(AudioClip audioClip)
