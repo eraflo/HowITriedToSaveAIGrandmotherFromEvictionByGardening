@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab51ba6199364b48877784ffb72b5279, type: 3}
   m_Name: GlobalPlantOptions
   m_EditorClassIdentifier: 
-  dirtPile: {fileID: 919132149155446097, guid: 312ee1b5a52b69941b28397a9fd4f8c6, type: 3}
-  dirtPileDigged: {fileID: 919132149155446097, guid: 0acf9bd0113023b48aab29c729e42e90,
+  dirtPile: {fileID: 2481533228539036161, guid: ec69835a4f87d0443958a5baec5fff83,
     type: 3}
-  dirtPileFilled: {fileID: 919132149155446097, guid: 3ded86da9e333b94c98fd98bdc38d86c,
+  dirtPileDigged: {fileID: 2481533228539036161, guid: b18ff4e31c08f1347847bfe8d3477d7d,
+    type: 3}
+  dirtPileFilled: {fileID: 2481533228539036161, guid: ea853c8fb5c5f314bb19dc8d6f6903dd,
     type: 3}
